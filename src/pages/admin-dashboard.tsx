@@ -6,7 +6,13 @@ import {
   MessageSquare, Image as ImageIcon, CheckCircle2,
   Circle, Clock3
 } from 'lucide-react'
-import { supabase, getAllOrders, updateOrderStatus, subscribeToOrders } from '@/lib/supabase'
+import {
+  supabase,
+  getAllOrders,
+  resolveOrderImageUrl,
+  subscribeToOrders,
+  updateOrderStatus,
+} from '@/lib/supabase'
 import { toast } from 'sonner'
 
 interface Order {
@@ -26,6 +32,7 @@ interface Order {
     id: string
     image_url: string
     file_name: string | null
+    preview_url?: string
   }>
 }
 
@@ -66,7 +73,19 @@ export default function AdminDashboard() {
   const loadOrders = async () => {
     try {
       const data = await getAllOrders()
-      setOrders(data as Order[])
+      const ordersWithResolvedImages = await Promise.all(
+        ((data as Order[]) || []).map(async (order) => ({
+          ...order,
+          order_images: await Promise.all(
+            (order.order_images || []).map(async (image) => ({
+              ...image,
+              preview_url: await resolveOrderImageUrl(image.image_url),
+            }))
+          ),
+        }))
+      )
+
+      setOrders(ordersWithResolvedImages)
     } catch (error) {
       console.error('Error loading orders:', error)
       toast.error('Failed to load orders')
@@ -369,14 +388,15 @@ function OrderCard({
             {order.order_images.map((image) => (
               <a
                 key={image.id}
-                href={image.image_url}
+                href={image.preview_url || image.image_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all"
               >
                 <img
-                  src={image.image_url}
+                  src={image.preview_url || image.image_url}
                   alt={image.file_name || 'Order image'}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />

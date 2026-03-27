@@ -29,6 +29,15 @@ const QUICK_ACTIONS = [
 const PROMPT_DELAY_MS = 8000
 const PROMPT_VISIBLE_MS = 12000
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
@@ -44,6 +53,7 @@ export default function ChatbotWidget() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [showPromptBubble, setShowPromptBubble] = useState(false)
   const [hasPromptShown, setHasPromptShown] = useState(false)
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -60,6 +70,29 @@ export default function ChatbotWidget() {
 
     textareaRef.current?.focus()
   }, [isOpen])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 639px)')
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches)
+
+    updateViewport()
+    mediaQuery.addEventListener('change', updateViewport)
+
+    return () => mediaQuery.removeEventListener('change', updateViewport)
+  }, [])
+
+  useEffect(() => {
+    if (!(isOpen && isMobileViewport)) {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isMobileViewport, isOpen])
 
   useEffect(() => {
     return () => {
@@ -157,28 +190,26 @@ export default function ChatbotWidget() {
 
     let imageBase64: string | null = null
     if (currentImage) {
-      imageBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.readAsDataURL(currentImage)
-      })
+      imageBase64 = await readFileAsDataUrl(currentImage)
     }
 
     const userMessage: Message = {
       role: 'user',
-      content: nextInput || '(uploaded image)',
+      content: nextInput,
       timestamp: new Date(),
-      imageUrl: currentImagePreview || undefined,
+      imageUrl: imageBase64 || currentImagePreview || undefined,
     }
 
     const conversationHistory = [
       ...messages.map((message) => ({
         role: message.role as 'user' | 'assistant',
-        content: message.content,
+        content:
+          message.content ||
+          (message.imageUrl ? 'Customer shared a cake inspiration image for reference.' : ''),
       })),
       {
         role: 'user' as const,
-        content: userMessage.content,
+        content: nextInput || 'Here is a cake inspiration image for reference.',
       },
     ]
 
@@ -348,13 +379,28 @@ export default function ChatbotWidget() {
       </AnimatePresence>
 
       <AnimatePresence>
+        {isOpen && isMobileViewport && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 z-40 bg-slate-950/18 backdrop-blur-[2px] sm:hidden"
+            aria-label="Close chat assistant backdrop"
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ duration: 0.24 }}
-            className="fixed inset-x-4 bottom-4 z-50 flex h-[min(78vh,640px)] flex-col overflow-hidden rounded-[2rem] border border-pink-100 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[420px]"
+            className="fixed inset-x-3 bottom-3 z-50 flex h-[min(82svh,42rem)] flex-col overflow-hidden rounded-[1.75rem] border border-pink-100/80 bg-white/98 shadow-[0_24px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[min(78vh,640px)] sm:w-[420px] sm:rounded-[2rem] sm:shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
           >
             <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 px-4 py-4 text-white">
               <div className="flex items-start justify-between gap-3">
@@ -407,7 +453,7 @@ export default function ChatbotWidget() {
               </div>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-pink-50/60 via-white to-purple-50/40 p-4">
+            <div className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-pink-50/60 via-white to-purple-50/40 p-4 overscroll-contain">
               {messages.map((message, index) => (
                 <div
                   key={`${message.role}-${index}-${message.timestamp.getTime()}`}
@@ -423,14 +469,18 @@ export default function ChatbotWidget() {
                     {message.imageUrl && (
                       <img
                         src={message.imageUrl}
-                        alt="Uploaded cake inspiration"
+                        alt="Cake inspiration"
                         className="mb-3 w-full rounded-2xl border border-pink-100 object-cover"
                       />
                     )}
 
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {message.content && (
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    )}
                     <p
-                      className={`mt-2 text-xs ${
+                      className={`text-xs ${
+                        message.content ? 'mt-2' : 'mt-0'
+                      } ${
                         message.role === 'user' ? 'text-white/75' : 'text-slate-400'
                       }`}
                     >

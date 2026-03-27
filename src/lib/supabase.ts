@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
+const ORDER_IMAGE_BUCKET = 'order-images'
 
 const missingSupabaseConfigMessage =
   'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment settings.'
@@ -31,6 +32,37 @@ export const supabase = new Proxy({} as SupabaseClient, {
   },
 }) as SupabaseClient
 
+function extractOrderImagePath(imageReference: string) {
+  const trimmedReference = imageReference.trim()
+
+  if (!trimmedReference) {
+    return null
+  }
+
+  if (!/^https?:\/\//i.test(trimmedReference)) {
+    return trimmedReference.replace(/^\/+/, '')
+  }
+
+  try {
+    const { pathname } = new URL(trimmedReference)
+    const storagePathPrefixes = [
+      `/storage/v1/object/public/${ORDER_IMAGE_BUCKET}/`,
+      `/storage/v1/object/sign/${ORDER_IMAGE_BUCKET}/`,
+      `/storage/v1/object/authenticated/${ORDER_IMAGE_BUCKET}/`,
+    ]
+
+    for (const prefix of storagePathPrefixes) {
+      if (pathname.includes(prefix)) {
+        return decodeURIComponent(pathname.split(prefix)[1] || '')
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to parse stored image URL:', error)
+  }
+
+  return null
+}
+
 // Helper function to upload image to Supabase Storage
 export async function uploadOrderImage(file: File, orderId: string): Promise<string> {
   const client = getSupabaseClient()
@@ -39,7 +71,7 @@ export async function uploadOrderImage(file: File, orderId: string): Promise<str
   const filePath = `${orderId}/${fileName}`
 
   const { data, error } = await client.storage
-    .from('order-images')
+    .from(ORDER_IMAGE_BUCKET)
     .upload(filePath, file, {
       cacheControl: '3600',
       upsert: false
@@ -49,12 +81,30 @@ export async function uploadOrderImage(file: File, orderId: string): Promise<str
     throw error
   }
 
-  // Get public URL
-  const { data: { publicUrl } } = client.storage
-    .from('order-images')
-    .getPublicUrl(data.path)
+  return data.path
+}
 
-  return publicUrl
+export async function resolveOrderImageUrl(imageReference: string) {
+  const storagePath = extractOrderImagePath(imageReference)
+
+  if (!storagePath) {
+    return imageReference
+  }
+
+  const client = getSupabaseClient()
+  const { data, error } = await client.storage
+    .from(ORDER_IMAGE_BUCKET)
+    .createSignedUrl(storagePath, 60 * 60)
+
+  if (!error && data?.signedUrl) {
+    return data.signedUrl
+  }
+
+  const { data: publicUrlData } = client.storage
+    .from(ORDER_IMAGE_BUCKET)
+    .getPublicUrl(storagePath)
+
+  return publicUrlData.publicUrl || imageReference
 }
 
 // Helper function to create order with images
@@ -86,11 +136,11 @@ export async function createOrder(orderData: {
   // Upload images if provided
   if (images && images.length > 0 && order) {
     const imageUploadPromises = images.map(async (file) => {
-      const imageUrl = await uploadOrderImage(file, (order as any).id)
+      const imagePath = await uploadOrderImage(file, (order as any).id)
 
       return client.from('order_images').insert([{
         order_id: (order as any).id,
-        image_url: imageUrl,
+        image_url: imagePath,
         file_name: file.name,
         file_size: file.size
       }] as any)
