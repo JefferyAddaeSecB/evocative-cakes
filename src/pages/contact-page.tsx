@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Sparkles } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { collection, addDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 import { toast } from 'sonner'
 
 interface ContactFormData {
@@ -23,13 +21,13 @@ export default function ContactPage() {
     setIsSubmitting(true)
 
     try {
-      await addDoc(collection(db, 'contacts'), {
-        ...data,
-        createdAt: new Date(),
-        status: 'new'
-      })
+      // TODO: Integrate with Supabase or your backend API
+      console.log('Form submitted:', data)
 
-      toast.success('Thank you! Your cake order request has been submitted successfully. We\'ll get back to you soon!')
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      toast.success('Thank you! Your cake order request has been received. We\'ll get back to you soon!')
       reset()
     } catch (error) {
       console.error('Error submitting form:', error)
