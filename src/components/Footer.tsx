@@ -201,20 +201,22 @@ export default function Footer() {
             </motion.p>
 
             <div className="flex gap-6">
-              <motion.a
-                href="#"
-                whileHover={{ color: '#ec4899' }}
-                className="text-gray-400 transition-colors text-sm no-underline"
-              >
-                Privacy Policy
-              </motion.a>
-              <motion.a
-                href="#"
-                whileHover={{ color: '#ec4899' }}
-                className="text-gray-400 transition-colors text-sm no-underline"
-              >
-                Terms of Service
-              </motion.a>
+              <Link to="/privacy">
+                <motion.span
+                  whileHover={{ color: '#ec4899' }}
+                  className="text-gray-400 transition-colors text-sm cursor-pointer"
+                >
+                  Privacy Policy
+                </motion.span>
+              </Link>
+              <Link to="/terms">
+                <motion.span
+                  whileHover={{ color: '#ec4899' }}
+                  className="text-gray-400 transition-colors text-sm cursor-pointer"
+                >
+                  Terms of Service
+                </motion.span>
+              </Link>
             </div>
           </div>
         </motion.div>

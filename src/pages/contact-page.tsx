@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Sparkles } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import ImageUploadZone from '@/components/ImageUploadZone'
+import { createOrder } from '@/lib/supabase'
 
 interface ContactFormData {
   name: string
@@ -11,24 +13,36 @@ interface ContactFormData {
   eventType: string
   eventDate: string
   message: string
+  dietaryRestrictions: string
+  servingSize: string
 }
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState<File[]>([])
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>()
 
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true)
 
     try {
-      // TODO: Integrate with Supabase or your backend API
-      console.log('Form submitted:', data)
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Create order in Supabase with images
+      await createOrder({
+        source: 'contact_form',
+        customer_name: data.name,
+        customer_email: data.email,
+        customer_phone: data.phone,
+        event_type: data.eventType,
+        event_date: data.eventDate || undefined,
+        cake_description: data.message,
+        dietary_restrictions: data.dietaryRestrictions || undefined,
+        serving_size: data.servingSize || undefined,
+        design_preferences: undefined
+      }, uploadedImages)
 
       toast.success('Thank you! Your cake order request has been received. We\'ll get back to you soon!')
       reset()
+      setUploadedImages([])
     } catch (error) {
       console.error('Error submitting form:', error)
       toast.error('Oops! Something went wrong. Please try again or contact us directly.')
@@ -152,14 +166,45 @@ export default function ContactPage() {
                 {/* Message */}
                 <div>
                   <textarea
-                    rows={5}
-                    placeholder="Tell us about your vision, dietary restrictions, serving size, design preferences, etc. *"
+                    rows={4}
+                    placeholder="Tell us about your cake vision and design preferences *"
                     {...register('message', { required: 'Please tell us about your cake vision' })}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all resize-none"
                   />
                   {errors.message && (
                     <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>
                   )}
+                </div>
+
+                {/* Dietary Restrictions */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Dietary Restrictions (optional)"
+                    {...register('dietaryRestrictions')}
+                    className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                  />
+                </div>
+
+                {/* Serving Size */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Serving Size (e.g., 20-25 people)"
+                    {...register('servingSize')}
+                    className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Upload Cake Inspiration Images (Optional)
+                  </label>
+                  <ImageUploadZone
+                    onImagesChange={setUploadedImages}
+                    maxFiles={5}
+                  />
                 </div>
 
                 {/* Submit Button */}

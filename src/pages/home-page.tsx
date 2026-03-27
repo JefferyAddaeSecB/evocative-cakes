@@ -5,6 +5,8 @@ import { Sparkles, ArrowRight, Heart, Star } from 'lucide-react'
 import HeroCarousel from '@/components/HeroCarousel'
 import CakeCard from '@/components/CakeCard'
 
+const birthdayCakeImage = '/images/gallery/Birthday-Cakes/20250607_122824.jpg'
+
 const featuredCakes = [
   {
     image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80',
@@ -14,7 +16,7 @@ const featuredCakes = [
     description: 'Three-tier vanilla cake with buttercream roses',
   },
   {
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+    image: birthdayCakeImage,
     price: '$89',
     category: 'Birthday Cakes',
     title: 'Birthday Celebration',
@@ -65,7 +67,12 @@ export default function HomePage() {
                 transition={{ delay: 0.1 }}
               >
                 <div className="flex items-center space-x-2 mb-6">
-                  <Sparkles className="w-8 h-8 text-yellow-500" />
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Sparkles className="w-8 h-8 text-yellow-500" />
+                  </motion.div>
                   <span className="text-lg font-medium text-purple-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-200">
                     Premium Cake Artistry
                   </span>

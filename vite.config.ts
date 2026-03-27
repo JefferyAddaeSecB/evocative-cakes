@@ -19,5 +19,28 @@ export default defineConfig({
     sourcemap: false,
     minify: 'terser',
     target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return
+          }
+
+          if (id.includes('framer-motion')) {
+            return 'motion'
+          }
+
+          if (id.includes('@supabase')) {
+            return 'supabase'
+          }
+
+          if (id.includes('openai')) {
+            return 'openai'
+          }
+
+          return 'vendor'
+        },
+      },
+    },
   },
 })

@@ -27,8 +27,8 @@ export default function StatCard({
   useEffect(() => {
     if (inView) {
       const controls = animate(motionValue, value, {
-        duration: 2,
-        ease: 'easeOut',
+        duration: 1.2,
+        ease: [0.22, 1, 0.36, 1],
       })
 
       return controls.stop
@@ -38,19 +38,37 @@ export default function StatCard({
   return (
     <motion.div
       ref={ref}
-      className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 text-center shadow-xl"
+      className="rounded-3xl border border-white/70 bg-white/82 p-8 text-center shadow-xl backdrop-blur-sm"
       initial={{ opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: 'easeOut' }}
+      whileHover={{ y: -6, scale: 1.02 }}
     >
-      <div className={`w-16 h-16 bg-gradient-to-r ${gradient} rounded-full flex items-center justify-center mx-auto shadow-lg`}>
+      <motion.div
+        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r ${gradient} shadow-lg`}
+        animate={
+          inView
+            ? {
+                y: [0, -6, 0],
+                rotate: [0, -6, 0, 6, 0],
+                scale: [1, 1.06, 1],
+              }
+            : {}
+        }
+        transition={{
+          duration: 2.4,
+          repeat: Infinity,
+          ease: 'easeInOut',
+          delay: index * 0.12,
+        }}
+      >
         <Icon className="w-8 h-8 text-white" />
-      </div>
-      <div className="text-4xl font-bold text-gray-800 mt-4">
+      </motion.div>
+      <div className="mt-4 text-4xl font-bold text-gray-800">
         <motion.span>{roundedValue}</motion.span>
         {suffix}
       </div>
-      <p className="text-gray-600 mt-2">{label}</p>
+      <p className="mt-2 text-gray-600">{label}</p>
     </motion.div>
   )
 }

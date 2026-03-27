@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Heart, Sparkles } from 'lucide-react'
 
 interface Dot {
   id: number
@@ -9,16 +10,50 @@ interface Dot {
   y: number
 }
 
+interface Ornament {
+  id: number
+  left: number
+  top: number
+  size: number
+  duration: number
+  delay: number
+  drift: number
+  type: 'heart' | 'sparkle'
+}
+
+function createDots() {
+  return Array.from({ length: 20 }).map((_, index) => ({
+    id: index,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    speed: Math.random() * 1.2 + 0.3,
+    y: 0,
+  }))
+}
+
+function createOrnaments(): Ornament[] {
+  return Array.from({ length: 14 }).map((_, index) => ({
+    id: index,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    size: Math.random() * 24 + 16,
+    duration: Math.random() * 6 + 7,
+    delay: Math.random() * 2.5,
+    drift: Math.random() * 18 + 10,
+    type: index % 3 === 0 ? ('sparkle' as const) : ('heart' as const),
+  }))
+}
+
 export default function FloatingBackground() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-  const [dots, setDots] = useState<Dot[]>([])
+  const [dots, setDots] = useState<Dot[]>(() => createDots())
+  const [ornaments] = useState<Ornament[]>(() => createOrnaments())
 
-  // Mouse tracking
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (event: MouseEvent) => {
       setMousePos({
-        x: e.clientX - window.innerWidth / 2,
-        y: e.clientY - window.innerHeight / 2,
+        x: event.clientX - window.innerWidth / 2,
+        y: event.clientY - window.innerHeight / 2,
       })
     }
 
@@ -26,33 +61,19 @@ export default function FloatingBackground() {
     return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
-  // Initialize 20 dots
-  useEffect(() => {
-    const initialDots: Dot[] = Array.from({ length: 20 }).map((_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      speed: Math.random() * 1.2 + 0.3,
-      y: 0,
-    }))
-    setDots(initialDots)
-  }, [])
-
-  // Animate dots using RAF
   useEffect(() => {
     let rafId: number
 
     const animate = () => {
-      setDots((prevDots) =>
-        prevDots.map((dot) => {
-          let newY = dot.y - dot.speed
+      setDots((previousDots) =>
+        previousDots.map((dot) => {
+          let nextY = dot.y - dot.speed
 
-          // Reset to bottom when off screen
-          if (newY < -120) {
-            newY = 120
+          if (nextY < -120) {
+            nextY = 120
           }
 
-          return { ...dot, y: newY }
+          return { ...dot, y: nextY }
         })
       )
 
@@ -64,13 +85,12 @@ export default function FloatingBackground() {
   }, [])
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      {/* Solid gradient base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50" />
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-rose-50 to-blue-50" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(251,207,232,0.45),_transparent_42%),radial-gradient(circle_at_bottom_right,_rgba(196,181,253,0.28),_transparent_38%)]" />
 
-      {/* Large orb top-left - mouse parallax */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-pink-200/30 to-purple-200/30 rounded-full blur-3xl"
+        className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-gradient-to-r from-pink-200/30 to-purple-200/30 blur-3xl"
         animate={{
           x: mousePos.x * 0.05,
           y: mousePos.y * 0.05,
@@ -81,9 +101,8 @@ export default function FloatingBackground() {
         }}
       />
 
-      {/* Orb bottom-right - opposite parallax */}
       <motion.div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-blue-200/30 to-pink-200/30 rounded-full blur-3xl"
+        className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-gradient-to-r from-blue-200/30 to-pink-200/30 blur-3xl"
         animate={{
           x: -mousePos.x * 0.03,
           y: -mousePos.y * 0.03,
@@ -94,9 +113,8 @@ export default function FloatingBackground() {
         }}
       />
 
-      {/* Orb mid-right - slow rotation */}
       <motion.div
-        className="absolute top-1/2 right-1/3 w-64 h-64 bg-gradient-to-r from-purple-200/20 to-blue-200/20 rounded-full blur-2xl"
+        className="absolute right-1/3 top-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-purple-200/20 to-blue-200/20 blur-2xl"
         animate={{
           rotate: 360,
           x: mousePos.x * 0.02,
@@ -107,11 +125,49 @@ export default function FloatingBackground() {
         }}
       />
 
-      {/* 20 floating dots */}
+      {ornaments.map((ornament) => {
+        const Icon = ornament.type === 'heart' ? Heart : Sparkles
+        const iconClassName =
+          ornament.type === 'heart'
+            ? 'h-full w-full text-pink-300/65'
+            : 'h-full w-full text-purple-300/55'
+
+        return (
+          <motion.div
+            key={ornament.id}
+            className="absolute"
+            style={{
+              left: `${ornament.left}%`,
+              top: `${ornament.top}%`,
+              width: ornament.size,
+              height: ornament.size,
+            }}
+            animate={{
+              x: [0, ornament.drift, 0],
+              y: [0, -ornament.drift, 0],
+              rotate: [-8, 10, -8],
+              scale: [0.9, 1.08, 0.9],
+              opacity: [0.12, 0.34, 0.12],
+            }}
+            transition={{
+              duration: ornament.duration,
+              delay: ornament.delay,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          >
+            <Icon
+              className={iconClassName}
+              fill={ornament.type === 'heart' ? 'currentColor' : 'none'}
+            />
+          </motion.div>
+        )
+      })}
+
       {dots.map((dot) => (
         <div
           key={dot.id}
-          className="absolute w-2 h-2 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full opacity-40"
+          className="absolute h-2 w-2 rounded-full bg-gradient-to-r from-pink-300 to-purple-300 opacity-40"
           style={{
             left: `${dot.left}%`,
             top: `${dot.top}%`,
@@ -120,8 +176,11 @@ export default function FloatingBackground() {
         />
       ))}
 
-      {/* Subtle shimmer overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        animate={{ opacity: [0.35, 0.6, 0.35] }}
+        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+      />
     </div>
   )
 }

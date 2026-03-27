@@ -3,16 +3,11 @@ import { Link } from 'react-router-dom'
 import { Sparkles, Gift, Crown, Heart } from 'lucide-react'
 import CakeCard from '@/components/CakeCard'
 
+const birthdayCakeImage = '/images/gallery/Birthday-Cakes/20250607_122824.jpg'
+
 const birthdayCakes = [
   {
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
-    price: '$65',
-    category: 'Birthday Cakes',
-    title: 'Rainbow Delight',
-    description: 'Colorful layers with rainbow buttercream and sprinkles',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&q=80',
+    image: birthdayCakeImage,
     price: '$75',
     category: 'Birthday Cakes',
     title: 'Chocolate Fantasy',
@@ -24,13 +19,6 @@ const birthdayCakes = [
     category: 'Birthday Cakes',
     title: 'Unicorn Dreams',
     description: 'Vanilla cake with pastel colors and magical unicorn topper',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&q=80',
-    price: '$70',
-    category: 'Birthday Cakes',
-    title: 'Sports Theme',
-    description: 'Custom sports-themed cake with edible team logos',
   },
 ]
 

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NavLink, Link } from 'react-router-dom'
-import { CakeSlice, Menu, X, ArrowRight } from 'lucide-react'
+import { CakeSlice, Menu, X, ArrowRight, Sparkles } from 'lucide-react'
 import useScrollPosition from '@/hooks/useScrollPosition'
 
 const navLinks = [
@@ -9,14 +9,13 @@ const navLinks = [
   { label: 'About Us', path: '/about' },
   { label: 'Cakes', path: '/cakes' },
   { label: 'Gallery', path: '/gallery' },
+  { label: 'FAQ', path: '/faq' },
   { label: 'Contact Us', path: '/contact' },
 ]
 
 const NavMotion = motion.nav
 const DivMotion = motion.div
 const ButtonMotion = motion.button
-const SpanMotion = motion.span
-
 export default function Navbar() {
   const scrolled = useScrollPosition()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -43,8 +42,21 @@ export default function Navbar() {
             >
               <CakeSlice className="w-4 h-4 text-white" />
             </DivMotion>
-            <span className="font-bold text-gray-800 text-lg">EVO Cakes</span>
-            <span className="ml-1">✨</span>
+            <span className="text-lg font-black leading-none tracking-tight md:font-bold">
+              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent md:bg-none md:text-gray-800">
+                EVO
+              </span>{' '}
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent md:bg-none md:text-gray-800">
+                Cakes
+              </span>
+            </span>
+            <motion.div
+              className="ml-1"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+            >
+              <Sparkles className="h-4 w-4 text-yellow-500" />
+            </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -95,7 +107,11 @@ export default function Navbar() {
           <ButtonMotion
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors active:scale-95"
+            className={`md:hidden p-2 rounded-xl border transition-all duration-300 active:scale-95 ${
+              isMenuOpen
+                ? 'border-purple-300 bg-white/90 shadow-md shadow-purple-100'
+                : 'border-white/40 bg-white/70 hover:bg-white/90 shadow-sm backdrop-blur-sm'
+            }`}
           >
             <motion.div
               animate={{ rotate: isMenuOpen ? 90 : 0 }}
@@ -118,31 +134,33 @@ export default function Navbar() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="md:hidden border-t border-purple-200 overflow-hidden"
+              className="md:hidden overflow-hidden pt-3"
             >
-              <div className="flex flex-col gap-4 py-4">
-                {navLinks.map((link, idx) => (
-                  <motion.div
-                    key={link.path}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                  >
-                    <NavLink
-                      to={link.path}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `text-sm font-medium transition-colors no-underline block ${
-                          isActive
-                            ? 'text-purple-600'
-                            : 'text-gray-600 hover:text-purple-600'
-                        }`
-                      }
+              <div className="rounded-[1.75rem] border border-white/70 bg-white/92 p-3 shadow-[0_20px_45px_rgba(168,85,247,0.16)] backdrop-blur-xl">
+                <div className="flex flex-col gap-2">
+                  {navLinks.map((link, idx) => (
+                    <motion.div
+                      key={link.path}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
                     >
-                      {link.label}
-                    </NavLink>
-                  </motion.div>
-                ))}
+                      <NavLink
+                        to={link.path}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `block rounded-2xl border px-4 py-3 text-sm font-semibold no-underline transition-all duration-300 ${
+                            isActive
+                              ? 'border-purple-200 bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 shadow-sm shadow-purple-100'
+                              : 'border-transparent bg-slate-50/90 text-slate-700 hover:border-purple-100 hover:bg-white hover:text-purple-600'
+                          }`
+                        }
+                      >
+                        {link.label}
+                      </NavLink>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </DivMotion>
           )}

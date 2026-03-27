@@ -19,7 +19,7 @@ const slides: Slide[] = [
   {
     title: 'Birthday Celebrations',
     subtitle: 'Custom birthday cakes that bring joy and sweetness to every celebration',
-    image: 'https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=800&q=80',
+    image: '/images/gallery/Birthday-Cakes/20250607_122824.jpg',
     alt: 'Birthday Celebrations',
   },
   {
