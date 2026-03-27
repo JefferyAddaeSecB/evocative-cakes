@@ -31,11 +31,11 @@ export default defineConfig({
           }
 
           if (id.includes('@supabase')) {
-            return 'supabase'
+            return 'supabase-sdk'
           }
 
           if (id.includes('openai')) {
-            return 'openai'
+            return 'openai-sdk'
           }
 
           return 'vendor'

@@ -1,21 +1,44 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env.local file.')
+const missingSupabaseConfigMessage =
+  'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment settings.'
+
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+
+let supabaseClient: SupabaseClient | null = null
+
+export function getSupabaseClient() {
+  if (!isSupabaseConfigured) {
+    throw new Error(missingSupabaseConfigMessage)
+  }
+
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!)
+  }
+
+  return supabaseClient
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getSupabaseClient()
+    const value = Reflect.get(client as object, prop, client)
+
+    return typeof value === 'function' ? value.bind(client) : value
+  },
+}) as SupabaseClient
 
 // Helper function to upload image to Supabase Storage
 export async function uploadOrderImage(file: File, orderId: string): Promise<string> {
+  const client = getSupabaseClient()
   const fileExt = file.name.split('.').pop()
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
   const filePath = `${orderId}/${fileName}`
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await client.storage
     .from('order-images')
     .upload(filePath, file, {
       cacheControl: '3600',
@@ -27,7 +50,7 @@ export async function uploadOrderImage(file: File, orderId: string): Promise<str
   }
 
   // Get public URL
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = client.storage
     .from('order-images')
     .getPublicUrl(data.path)
 
@@ -47,8 +70,10 @@ export async function createOrder(orderData: {
   serving_size?: string
   design_preferences?: string
 }, images?: File[]) {
+  const client = getSupabaseClient()
+
   // Insert order
-  const { data: order, error: orderError } = await supabase
+  const { data: order, error: orderError } = await client
     .from('orders')
     .insert([orderData] as any)
     .select()
@@ -63,7 +88,7 @@ export async function createOrder(orderData: {
     const imageUploadPromises = images.map(async (file) => {
       const imageUrl = await uploadOrderImage(file, (order as any).id)
 
-      return supabase.from('order_images').insert([{
+      return client.from('order_images').insert([{
         order_id: (order as any).id,
         image_url: imageUrl,
         file_name: file.name,
@@ -79,7 +104,8 @@ export async function createOrder(orderData: {
 
 // Helper function to get order with images
 export async function getOrderWithImages(orderId: string) {
-  const { data: order, error: orderError } = await supabase
+  const client = getSupabaseClient()
+  const { data: order, error: orderError } = await client
     .from('orders')
     .select('*, order_images(*)')
     .eq('id', orderId)
@@ -94,7 +120,8 @@ export async function getOrderWithImages(orderId: string) {
 
 // Helper function to get all orders (for admin dashboard)
 export async function getAllOrders() {
-  const { data: orders, error } = await supabase
+  const client = getSupabaseClient()
+  const { data: orders, error } = await client
     .from('orders')
     .select('*, order_images(*)')
     .order('created_at', { ascending: false })
@@ -108,7 +135,8 @@ export async function getAllOrders() {
 
 // Helper function to update order status
 export async function updateOrderStatus(orderId: string, status: 'new' | 'in_progress' | 'completed', adminNotes?: string) {
-  const { data, error } = await supabase
+  const client = getSupabaseClient()
+  const { data, error } = await client
     .from('orders')
     .update({ status, admin_notes: adminNotes } as any)
     .eq('id', orderId)
@@ -124,7 +152,7 @@ export async function updateOrderStatus(orderId: string, status: 'new' | 'in_pro
 
 // Real-time subscription for admin dashboard
 export function subscribeToOrders(callback: (payload: any) => void) {
-  return supabase
+  return getSupabaseClient()
     .channel('orders-channel')
     .on(
       'postgres_changes',
