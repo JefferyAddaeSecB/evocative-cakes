@@ -41,6 +41,7 @@ const galleryFileMap: Record<GalleryLeafCategory, string[]> = {
   'Wedding Cakes': [
     '20210710_173432.jpg',
     '20211009_110702.jpg',
+    'main 1.jpg',
     '20211009_111143.jpg',
     '20211009_144413.jpg',
     '20211030_120003.jpg',
@@ -55,7 +56,6 @@ const galleryFileMap: Record<GalleryLeafCategory, string[]> = {
     'Screenshot_20220910-114520_Instagram.jpg',
     'Tracy and Lawrence.JPG',
     'Tracy and Lawrence2.JPG',
-    'main 1.jpg',
   ],
   'Birthday Cakes': [
     '13th Birthday cake.JPG',
