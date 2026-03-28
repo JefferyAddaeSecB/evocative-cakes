@@ -196,8 +196,8 @@ export default function PrivacyPage() {
                 </p>
                 <div className="text-gray-700 space-y-1">
                   <p><strong>Email:</strong> privacy@evocakes.com</p>
-                  <p><strong>Phone:</strong> (555) 123-CAKE</p>
-                  <p><strong>Address:</strong> 123 Sweet Street, Bakery City</p>
+                  <p><strong>Phone:</strong> 416-910-1439</p>
+                  <p><strong>Location:</strong> Brampton, Ontario, Canada</p>
                 </div>
               </div>
 

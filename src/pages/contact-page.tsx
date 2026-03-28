@@ -237,7 +237,12 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Phone</p>
-                      <p className="font-semibold text-gray-800">(555) 123-CAKE</p>
+                      <a
+                        href="tel:+14169101439"
+                        className="font-semibold text-gray-800 no-underline transition-colors hover:text-purple-600"
+                      >
+                        416-910-1439
+                      </a>
                     </div>
                   </div>
 
@@ -256,8 +261,8 @@ export default function ContactPage() {
                       <MapPin className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Address</p>
-                      <p className="font-semibold text-gray-800">123 Sweet Street, Bakery City</p>
+                      <p className="text-sm text-gray-500">Location</p>
+                      <p className="font-semibold text-gray-800">Brampton, Ontario, Canada</p>
                     </div>
                   </div>
                 </div>

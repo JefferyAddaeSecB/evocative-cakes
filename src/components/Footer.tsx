@@ -134,7 +134,12 @@ export default function Footer() {
                 className="flex items-start gap-3"
               >
                 <Phone className="w-5 h-5 text-pink-500 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">+1 (555) 000-0000</span>
+                <a
+                  href="tel:+14169101439"
+                  className="text-gray-400 hover:text-pink-500 transition-colors text-sm no-underline"
+                >
+                  416-910-1439
+                </a>
               </motion.li>
               <motion.li whileHover={{ x: 5 }} className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-pink-500 mt-0.5 flex-shrink-0" />
@@ -148,8 +153,8 @@ export default function Footer() {
               <motion.li whileHover={{ x: 5 }} className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-pink-500 mt-0.5 flex-shrink-0" />
                 <span className="text-gray-400 text-sm">
-                  123 Cake Street<br />
-                  Sweet City, SC 12345
+                  Brampton, Ontario<br />
+                  Canada
                 </span>
               </motion.li>
             </ul>
