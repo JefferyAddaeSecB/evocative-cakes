@@ -55,14 +55,20 @@ Behavior:
 6. If the customer uploads an image, react enthusiastically, briefly describe the style you notice, and confirm EVO Cakes can work from it.
 7. Do not invent unavailable services, exact pricing, or scheduling guarantees that are not in the facts above.
 8. When the user is already in an order flow, interpret short replies in context. For example, "wedding", "21st April", "10", or "vanilla" can be valid answers to the current step.
-9. Keep normal replies to 2-4 short sentences.
-10. Once you have enough details, briefly summarize the captured order before confirming the next step.
-11. When you have at least customer_name, customer_email, customer_phone, event_type, and cake_description, include a short friendly confirmation for the customer and then end with a new line in this exact format:
+9. When an order is in progress, do not switch into generic FAQ mode just because the latest reply contains a flavor or cake keyword. Treat it as part of the order unless the user clearly asks a separate question.
+10. Keep normal replies to 2-4 short sentences.
+11. Once you have enough details, briefly summarize the captured order before confirming the next step.
+12. When you have at least customer_name, customer_email, customer_phone, event_type, and cake_description, include a short friendly confirmation for the customer and then end with a new line in this exact format:
 ORDER_COMPLETE: {"customer_name":"...","customer_email":"...","customer_phone":"...","event_type":"...","event_date":"...","cake_description":"...","dietary_restrictions":"...","serving_size":"...","design_preferences":"..."}
-12. The JSON must be valid and use double quotes only.`
+13. The JSON must be valid and use double quotes only.`
 
 interface Message {
   role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
+interface ConversationMessage {
+  role: 'user' | 'assistant'
   content: string
 }
 
@@ -571,4 +577,26 @@ export function extractOrderFromConversation(aiResponse: string): OrderCapture |
     console.error('Failed to parse order:', error)
     return null
   }
+}
+
+export function extractOrderFromMessages(messages: ConversationMessage[], hasImage = false): OrderCapture | null {
+  const userMessages = messages
+    .filter((message) => message.role === 'user')
+    .map((message) => ({ role: 'user' as const, content: message.content }))
+
+  const draft = buildOrderDraft(userMessages, hasImage)
+  const wantsOrder = hasOrderIntent(
+    normalizeWhitespace(userMessages.map((message) => message.content).join(' ')),
+    draft
+  )
+
+  if (!wantsOrder) {
+    return null
+  }
+
+  if (getNextMissingField(draft)) {
+    return null
+  }
+
+  return finalizeDraft(draft)
 }

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   LogOut, Phone, Mail, Calendar, User,
   MessageSquare, Image as ImageIcon, CheckCircle2,
-  Circle, Clock3
+  Circle, Clock3, RefreshCw, Search
 } from 'lucide-react'
 import {
   supabase,
@@ -40,7 +40,11 @@ interface Order {
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [filterStatus, setFilterStatus] = useState<'all' | 'new' | 'in_progress' | 'completed'>('all')
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'chatbot' | 'contact_form'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function AdminDashboard() {
     // Subscribe to real-time updates
     const subscription = subscribeToOrders((payload) => {
       console.log('Real-time update:', payload)
-      loadOrders() // Reload orders when there's a change
+      void loadOrders(true)
 
       if (payload.eventType === 'INSERT') {
         toast.success('New order received!', {
@@ -71,7 +75,13 @@ export default function AdminDashboard() {
     }
   }, [navigate])
 
-  const loadOrders = async () => {
+  const loadOrders = async (backgroundRefresh = false) => {
+    if (backgroundRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
+
     try {
       const data = await getAllOrders()
       const ordersWithResolvedImages = await Promise.all(
@@ -87,11 +97,16 @@ export default function AdminDashboard() {
       )
 
       setOrders(ordersWithResolvedImages)
+      setLastUpdatedAt(new Date())
     } catch (error) {
       console.error('Error loading orders:', error)
       toast.error('Failed to load orders')
     } finally {
-      setIsLoading(false)
+      if (backgroundRefresh) {
+        setIsRefreshing(false)
+      } else {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -104,22 +119,42 @@ export default function AdminDashboard() {
     try {
       await updateOrderStatus(orderId, newStatus)
       toast.success('Status updated!')
-      loadOrders()
+      void loadOrders(true)
     } catch (error) {
       console.error('Error updating status:', error)
       toast.error('Failed to update status')
     }
   }
 
-  const filteredOrders = filterStatus === 'all'
-    ? orders
-    : orders.filter(order => order.status === filterStatus)
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
+  const filteredOrders = orders.filter((order) => {
+    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
+    const matchesSource = sourceFilter === 'all' || order.source === sourceFilter
+    const matchesSearch =
+      normalizedSearchQuery.length === 0 ||
+      [
+        order.customer_name,
+        order.customer_email,
+        order.customer_phone,
+        order.event_type,
+        order.cake_description,
+        order.design_preferences,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearchQuery)
+
+    return matchesStatus && matchesSource && matchesSearch
+  })
 
   const stats = {
     total: orders.length,
     new: orders.filter(o => o.status === 'new').length,
     inProgress: orders.filter(o => o.status === 'in_progress').length,
     completed: orders.filter(o => o.status === 'completed').length,
+    chatbot: orders.filter(o => o.source === 'chatbot').length,
+    contactForm: orders.filter(o => o.source === 'contact_form').length,
   }
 
   return (
@@ -213,20 +248,73 @@ export default function AdminDashboard() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2 mb-6">
-          {(['all', 'new', 'in_progress', 'completed'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                filterStatus === status
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-              }`}
-            >
-              {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-            </button>
-          ))}
+        <div className="mb-6 rounded-2xl border border-purple-100 bg-white/90 p-4 shadow-lg backdrop-blur-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-xl">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search by customer, email, phone, or cake details"
+                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {(['all', 'new', 'in_progress', 'completed'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`rounded-lg px-4 py-2 font-medium transition-all ${
+                    filterStatus === status
+                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                      : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {([
+                ['all', 'All Sources'],
+                ['chatbot', 'Chatbot'],
+                ['contact_form', 'Contact Form'],
+              ] as const).map(([source, label]) => (
+                <button
+                  key={source}
+                  onClick={() => setSourceFilter(source)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                    sourceFilter === source
+                      ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+              <span>{filteredOrders.length} showing</span>
+              <span>{stats.chatbot} chatbot</span>
+              <span>{stats.contactForm} contact form</span>
+              {lastUpdatedAt && (
+                <span>Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              )}
+              <button
+                onClick={() => void loadOrders(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 font-medium text-gray-700 transition-all hover:bg-gray-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Orders List */}
@@ -273,6 +361,11 @@ function OrderCard({
     in_progress: 'bg-purple-100 text-purple-700 border-purple-200',
     completed: 'bg-green-100 text-green-700 border-green-200',
   }
+  const sourceLabel = order.source === 'chatbot' ? 'Chatbot' : 'Contact Form'
+  const sourceClasses =
+    order.source === 'chatbot'
+      ? 'bg-purple-100 text-purple-700 border-purple-200'
+      : 'bg-sky-100 text-sky-700 border-sky-200'
 
   const orderSummaryParts = [
     order.event_type ? `${order.event_type} cake` : 'Cake order',
@@ -295,13 +388,19 @@ function OrderCard({
         {/* Left: Customer Info */}
         <div className="space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${statusColors[order.status]}`}>
-                {order.status.replace('_', ' ')}
-              </span>
-              <span className="text-xs text-gray-500">
-                {new Date(order.created_at).toLocaleDateString()}
-              </span>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full border px-3 py-1 text-sm font-medium ${statusColors[order.status]}`}>
+                  {order.status.replace('_', ' ')}
+                </span>
+                <span className={`rounded-full border px-3 py-1 text-sm font-medium ${sourceClasses}`}>
+                  {sourceLabel}
+                </span>
+              </div>
+              <div className="text-right text-xs text-gray-500">
+                <p>{new Date(order.created_at).toLocaleDateString()}</p>
+                <p>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 text-gray-800 mb-2">

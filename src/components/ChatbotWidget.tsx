@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { createOrder } from '@/lib/supabase'
 import {
   extractOrderFromConversation,
+  extractOrderFromMessages,
   sanitizeAssistantResponse,
   sendChatMessage,
 } from '@/lib/openai'
@@ -38,6 +39,26 @@ function readFileAsDataUrl(file: File) {
   })
 }
 
+function createOrderSignature(orderData: {
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  event_type: string
+  event_date?: string
+  cake_description: string
+}) {
+  return [
+    orderData.customer_name,
+    orderData.customer_email,
+    orderData.customer_phone,
+    orderData.event_type,
+    orderData.event_date || '',
+    orderData.cake_description,
+  ]
+    .join('|')
+    .toLowerCase()
+}
+
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
@@ -58,6 +79,7 @@ export default function ChatbotWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const lastSubmittedOrderRef = useRef<string | null>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -234,7 +256,9 @@ export default function ChatbotWidget() {
         conversationHistory,
         imageBase64 || undefined
       )
-      const orderData = extractOrderFromConversation(rawAssistantResponse)
+      const orderData =
+        extractOrderFromConversation(rawAssistantResponse) ||
+        extractOrderFromMessages(conversationHistory, Boolean(currentImage))
       const displayResponse =
         sanitizeAssistantResponse(rawAssistantResponse) ||
         "Perfect, I've captured your request and our team will follow up soon."
@@ -249,23 +273,28 @@ export default function ChatbotWidget() {
       ])
 
       if (orderData) {
-        await createOrder(
-          {
-            source: 'chatbot',
-            customer_name: orderData.customer_name,
-            customer_email: orderData.customer_email,
-            customer_phone: orderData.customer_phone,
-            event_type: orderData.event_type,
-            event_date: orderData.event_date,
-            cake_description: orderData.cake_description,
-            dietary_restrictions: orderData.dietary_restrictions,
-            serving_size: orderData.serving_size,
-            design_preferences: orderData.design_preferences,
-          },
-          currentImage ? [currentImage] : undefined
-        )
+        const orderSignature = createOrderSignature(orderData)
 
-        toast.success("Your cake request has been sent. We'll follow up soon.")
+        if (lastSubmittedOrderRef.current !== orderSignature) {
+          await createOrder(
+            {
+              source: 'chatbot',
+              customer_name: orderData.customer_name,
+              customer_email: orderData.customer_email,
+              customer_phone: orderData.customer_phone,
+              event_type: orderData.event_type,
+              event_date: orderData.event_date,
+              cake_description: orderData.cake_description,
+              dietary_restrictions: orderData.dietary_restrictions,
+              serving_size: orderData.serving_size,
+              design_preferences: orderData.design_preferences,
+            },
+            currentImage ? [currentImage] : undefined
+          )
+
+          lastSubmittedOrderRef.current = orderSignature
+          toast.success("Your cake request has been sent. We'll follow up soon.")
+        }
       }
 
       if (currentImage) {

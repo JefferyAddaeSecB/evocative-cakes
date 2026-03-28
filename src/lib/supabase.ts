@@ -3,6 +3,32 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 const ORDER_IMAGE_BUCKET = 'order-images'
+const MONTH_LOOKUP: Record<string, number> = {
+  january: 0,
+  jan: 0,
+  february: 1,
+  feb: 1,
+  march: 2,
+  mar: 2,
+  april: 3,
+  apr: 3,
+  may: 4,
+  june: 5,
+  jun: 5,
+  july: 6,
+  jul: 6,
+  august: 7,
+  aug: 7,
+  september: 8,
+  sept: 8,
+  sep: 8,
+  october: 9,
+  oct: 9,
+  november: 10,
+  nov: 10,
+  december: 11,
+  dec: 11,
+}
 
 const missingSupabaseConfigMessage =
   'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment settings.'
@@ -63,6 +89,78 @@ function extractOrderImagePath(imageReference: string) {
   return null
 }
 
+function formatDateParts(year: number, monthIndex: number, day: number) {
+  const month = String(monthIndex + 1).padStart(2, '0')
+  const normalizedDay = String(day).padStart(2, '0')
+
+  return `${year}-${month}-${normalizedDay}`
+}
+
+function normalizeOrderDate(eventDate?: string) {
+  if (!eventDate) {
+    return undefined
+  }
+
+  const normalizedDate = eventDate.trim()
+
+  if (!normalizedDate) {
+    return undefined
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+    return normalizedDate
+  }
+
+  const sanitizedDate = normalizedDate
+    .toLowerCase()
+    .replace(/(\d+)(st|nd|rd|th)\b/g, '$1')
+    .replace(/,/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const monthFirstMatch = sanitizedDate.match(/^([a-z]+)\s+(\d{1,2})(?:\s+(\d{4}))?$/i)
+  const dayFirstMatch = sanitizedDate.match(/^(\d{1,2})\s+([a-z]+)(?:\s+(\d{4}))?$/i)
+  const numericMatch = sanitizedDate.match(/^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$/)
+
+  const today = new Date()
+
+  if (monthFirstMatch || dayFirstMatch) {
+    const [, first, second, explicitYear] = monthFirstMatch || dayFirstMatch || []
+    const monthName = monthFirstMatch ? first : second
+    const dayValue = Number(monthFirstMatch ? second : first)
+    const monthIndex = MONTH_LOOKUP[monthName]
+
+    if (Number.isInteger(dayValue) && monthIndex !== undefined) {
+      let year = explicitYear ? Number(explicitYear) : today.getFullYear()
+      let candidateDate = new Date(year, monthIndex, dayValue)
+
+      if (!explicitYear && candidateDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+        year += 1
+        candidateDate = new Date(year, monthIndex, dayValue)
+      }
+
+      return formatDateParts(candidateDate.getFullYear(), candidateDate.getMonth(), candidateDate.getDate())
+    }
+  }
+
+  if (numericMatch) {
+    const firstValue = Number(numericMatch[1])
+    const secondValue = Number(numericMatch[2])
+    const explicitYear = numericMatch[3]
+    const monthValue = firstValue > 12 ? secondValue : firstValue
+    const dayValue = firstValue > 12 ? firstValue : secondValue
+    const yearValue = explicitYear
+      ? Number(explicitYear.length === 2 ? `20${explicitYear}` : explicitYear)
+      : today.getFullYear()
+
+    if (monthValue >= 1 && monthValue <= 12 && dayValue >= 1 && dayValue <= 31) {
+      return formatDateParts(yearValue, monthValue - 1, dayValue)
+    }
+  }
+
+  return undefined
+}
+
 // Helper function to upload image to Supabase Storage
 export async function uploadOrderImage(file: File, orderId: string): Promise<string> {
   const client = getSupabaseClient()
@@ -121,11 +219,15 @@ export async function createOrder(orderData: {
   design_preferences?: string
 }, images?: File[]) {
   const client = getSupabaseClient()
+  const normalizedOrderData = {
+    ...orderData,
+    event_date: normalizeOrderDate(orderData.event_date),
+  }
 
   // Insert order
   const { data: order, error: orderError } = await client
     .from('orders')
-    .insert([orderData] as any)
+    .insert([normalizedOrderData] as any)
     .select()
     .single()
 
