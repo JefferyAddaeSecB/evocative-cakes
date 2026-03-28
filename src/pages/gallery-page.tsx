@@ -35,7 +35,7 @@ export default function GalleryPage() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-600 max-w-2xl mx-auto"
           >
-            Explore our portfolio of beautiful cakes and see the joy we've helped create for countless celebrations
+            Explore our portfolio of cakes, cupcakes, cookies, and celebration treats to see the joy we have helped create for countless moments
           </motion.p>
         </div>
       </section>
