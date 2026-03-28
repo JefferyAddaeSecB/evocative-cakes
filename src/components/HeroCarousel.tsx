@@ -13,7 +13,7 @@ const slides: Slide[] = [
   {
     title: 'Elegant Wedding Cakes',
     subtitle: 'Make your special day unforgettable with our stunning wedding cake designs',
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80',
+    image: '/images/gallery/Wedding-Cakes/20211009_111143.jpg',
     alt: 'Elegant Wedding Cakes',
   },
   {
@@ -31,7 +31,7 @@ const slides: Slide[] = [
   {
     title: 'Anniversary Specials',
     subtitle: 'Romantic designs to celebrate your love story',
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80',
+    image: '/images/gallery/Wedding-Cakes/Anivesary%20cake.JPG',
     alt: 'Anniversary Specials',
   },
 ]
