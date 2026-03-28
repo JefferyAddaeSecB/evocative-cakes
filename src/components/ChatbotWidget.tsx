@@ -72,6 +72,18 @@ export default function ChatbotWidget() {
   }, [isOpen])
 
   useEffect(() => {
+    if (!isOpen || isLoading) {
+      return
+    }
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      textareaRef.current?.focus()
+    })
+
+    return () => window.cancelAnimationFrame(focusFrame)
+  }, [isLoading, isOpen, messages.length])
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 639px)')
     const updateViewport = () => setIsMobileViewport(mediaQuery.matches)
 
@@ -264,6 +276,9 @@ export default function ChatbotWidget() {
       toast.error('Failed to send message. Please try again.')
     } finally {
       setIsLoading(false)
+      window.requestAnimationFrame(() => {
+        textareaRef.current?.focus()
+      })
     }
   }
 

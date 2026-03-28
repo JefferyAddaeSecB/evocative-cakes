@@ -24,6 +24,7 @@ interface Order {
   event_type: string | null
   event_date: string | null
   cake_description: string
+  design_preferences: string | null
   dietary_restrictions: string | null
   serving_size: string | null
   status: 'new' | 'in_progress' | 'completed'
@@ -273,6 +274,16 @@ function OrderCard({
     completed: 'bg-green-100 text-green-700 border-green-200',
   }
 
+  const orderSummaryParts = [
+    order.event_type ? `${order.event_type} cake` : 'Cake order',
+    order.event_date ? `for ${new Date(order.event_date).toLocaleDateString()}` : null,
+    order.serving_size ? `serving ${order.serving_size}` : null,
+    order.cake_description ? `details: ${order.cake_description}` : null,
+    order.dietary_restrictions ? `dietary: ${order.dietary_restrictions}` : null,
+  ].filter(Boolean)
+
+  const orderSummary = orderSummaryParts.join(', ')
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -327,12 +338,24 @@ function OrderCard({
         {/* Middle: Order Details */}
         <div className="space-y-3">
           <div>
+            <label className="text-sm font-medium text-gray-600">Order Summary</label>
+            <p className="mt-1 text-gray-800 leading-6">{orderSummary}</p>
+          </div>
+
+          <div>
             <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               Cake Description
             </label>
             <p className="text-gray-800 mt-1">{order.cake_description}</p>
           </div>
+
+          {order.design_preferences && order.design_preferences !== order.cake_description && (
+            <div>
+              <label className="text-sm font-medium text-gray-600">Design Notes</label>
+              <p className="text-gray-800">{order.design_preferences}</p>
+            </div>
+          )}
 
           {order.dietary_restrictions && (
             <div>

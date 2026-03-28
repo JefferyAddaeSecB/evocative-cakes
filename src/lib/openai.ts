@@ -50,14 +50,16 @@ Behavior:
 1. Be warm, polished, and concise.
 2. Answer direct questions about pricing, flavors, delivery, dietary options, lead times, tastings, storage, payments, cancellations, and inspiration photos.
 3. If the customer asks about pricing, give the relevant starting ranges above and clearly say the final quote depends on size and design complexity.
-4. If the customer wants to place an order, guide them step by step and ask only one focused question at a time.
+4. If the customer wants to place an order, guide them step by step, acknowledge what they just shared, and ask only one focused follow-up question at a time.
 5. For orders, collect: customer_name, customer_email, customer_phone, event_type, event_date, serving_size, cake_description, design_preferences, dietary_restrictions.
 6. If the customer uploads an image, react enthusiastically, briefly describe the style you notice, and confirm EVO Cakes can work from it.
 7. Do not invent unavailable services, exact pricing, or scheduling guarantees that are not in the facts above.
-8. Keep normal replies to 2-4 short sentences.
-9. When you have at least customer_name, customer_email, customer_phone, event_type, and cake_description, include a short friendly confirmation for the customer and then end with a new line in this exact format:
+8. When the user is already in an order flow, interpret short replies in context. For example, "wedding", "21st April", "10", or "vanilla" can be valid answers to the current step.
+9. Keep normal replies to 2-4 short sentences.
+10. Once you have enough details, briefly summarize the captured order before confirming the next step.
+11. When you have at least customer_name, customer_email, customer_phone, event_type, and cake_description, include a short friendly confirmation for the customer and then end with a new line in this exact format:
 ORDER_COMPLETE: {"customer_name":"...","customer_email":"...","customer_phone":"...","event_type":"...","event_date":"...","cake_description":"...","dietary_restrictions":"...","serving_size":"...","design_preferences":"..."}
-10. The JSON must be valid and use double quotes only.`
+12. The JSON must be valid and use double quotes only.`
 
 interface Message {
   role: 'system' | 'user' | 'assistant'
@@ -102,6 +104,12 @@ const DIETARY_MATCHERS = [
 
 export async function sendChatMessage(messages: Message[], imageUrl?: string): Promise<string> {
   const openai = await getOpenAIClient()
+  const userMessages = messages.filter((message) => message.role === 'user')
+  const draft = buildOrderDraft(userMessages, Boolean(imageUrl))
+  const wantsOrder = hasOrderIntent(
+    normalizeWhitespace(userMessages.map((message) => message.content).join(' ')),
+    draft
+  )
 
   if (!openai) {
     return getFallbackResponse(messages, Boolean(imageUrl))
@@ -110,6 +118,7 @@ export async function sendChatMessage(messages: Message[], imageUrl?: string): P
   try {
     const chatMessages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: buildOrderContextPrompt(draft, wantsOrder) },
       ...messages.map(
         (message) =>
           ({
@@ -163,6 +172,20 @@ function getFallbackResponse(messages: Message[], hasImage: boolean): string {
   const draft = buildOrderDraft(userMessages, hasImage)
   const wantsOrder = hasOrderIntent(allUserText, draft)
 
+  if (wantsOrder) {
+    const missingField = getNextMissingField(draft)
+
+    if (!missingField) {
+      const finalizedOrder = finalizeDraft(draft)
+      const orderSummary = summarizeDraft(finalizedOrder)
+
+      return `Perfect. Here is the order summary I captured: ${orderSummary}. Our team will follow up to confirm the final quote and next steps.
+ORDER_COMPLETE: ${JSON.stringify(finalizedOrder)}`
+    }
+
+    return getOrderQuestion(missingField, draft)
+  }
+
   if (hasImage) {
     return 'That inspiration looks lovely. We can absolutely create something in a similar style. What kind of event is the cake for, and about how many people should it serve?'
   }
@@ -199,29 +222,16 @@ function getFallbackResponse(messages: Message[], hasImage: boolean): string {
     return 'Most cakes should be refrigerated and brought out 1-2 hours before serving. Fondant cakes can often stay at room temperature, and EVO Cakes will provide storage guidance with the order.'
   }
 
-  if (wantsOrder) {
-    const missingField = getNextMissingField(draft)
-
-    if (!missingField) {
-      const finalizedOrder = finalizeDraft(draft)
-
-      return `Perfect, I have the details I need to start your cake request. Our team will follow up to confirm the final quote and next steps.
-ORDER_COMPLETE: ${JSON.stringify(finalizedOrder)}`
-    }
-
-    return getOrderQuestion(missingField)
-  }
-
   return 'Welcome to EVO Cakes. I can help with pricing, flavors, delivery, dietary questions, or take your order step by step. Tell me what you need, or say "I want to place an order."'
 }
 
 function buildOrderDraft(messages: Message[], hasImage: boolean): OrderDraft {
   const userContents = messages.map((message) => normalizeWhitespace(message.content)).filter(Boolean)
-  const combinedText = userContents.join(' ')
+  const combinedText = normalizeWhitespace(userContents.join(' '))
 
   const eventType = extractEventType(combinedText)
-  const eventDate = extractEventDate(combinedText)
-  const servingSize = extractServingSize(combinedText)
+  const eventDate = extractEventDate(userContents)
+  const servingSize = extractServingSize(userContents)
   const dietaryRestrictions = extractDietaryRestrictions(combinedText)
   const customerEmail = extractEmail(combinedText)
   const customerPhone = extractPhone(combinedText)
@@ -251,7 +261,20 @@ function extractEventType(text: string): string | undefined {
   return undefined
 }
 
-function extractEventDate(text: string): string | undefined {
+function extractEventDate(messages: string[]): string | undefined {
+  const candidates = [...messages].reverse()
+
+  for (const message of candidates) {
+    const extractedDate = extractEventDateFromText(message)
+    if (extractedDate) {
+      return extractedDate
+    }
+  }
+
+  return extractEventDateFromText(messages.join(' '))
+}
+
+function extractEventDateFromText(text: string): string | undefined {
   const isoDate = text.match(/\b\d{4}-\d{2}-\d{2}\b/)
   if (isoDate) {
     return isoDate[0]
@@ -262,6 +285,11 @@ function extractEventDate(text: string): string | undefined {
     return normalizeWhitespace(longDate[0])
   }
 
+  const dayMonthDate = text.match(new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH_PATTERN}(?:,?\\s+\\d{4})?\\b`, 'i'))
+  if (dayMonthDate) {
+    return normalizeWhitespace(dayMonthDate[0])
+  }
+
   const numericDate = text.match(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})\b/)
   if (numericDate) {
     return numericDate[0]
@@ -270,7 +298,21 @@ function extractEventDate(text: string): string | undefined {
   return undefined
 }
 
-function extractServingSize(text: string): string | undefined {
+function extractServingSize(messages: string[]): string | undefined {
+  const candidates = [...messages].reverse()
+
+  for (const message of candidates) {
+    const extractedServingSize = extractServingSizeFromText(message)
+    if (extractedServingSize) {
+      return extractedServingSize
+    }
+  }
+
+  return extractServingSizeFromText(messages.join(' '))
+}
+
+function extractServingSizeFromText(text: string): string | undefined {
+  const normalizedText = normalizeWhitespace(text)
   const explicitRange = text.match(/\b\d+\s*(?:-\s*\d+)?\s*(?:people|guests|servings?)\b/i)
   if (explicitRange) {
     return normalizeWhitespace(explicitRange[0])
@@ -279,6 +321,11 @@ function extractServingSize(text: string): string | undefined {
   const servePattern = text.match(/\bserv(?:e|es|ing)\s+\d+\s*(?:-\s*\d+)?\b/i)
   if (servePattern) {
     return normalizeWhitespace(servePattern[0])
+  }
+
+  const bareNumber = normalizedText.match(/^(?:about|around)?\s*(\d{1,3})$/i)
+  if (bareNumber) {
+    return `${bareNumber[1]} people`
   }
 
   return undefined
@@ -413,20 +460,26 @@ function getNextMissingField(draft: OrderDraft) {
   return null
 }
 
-function getOrderQuestion(field: ReturnType<typeof getNextMissingField>): string {
+function getOrderQuestion(field: ReturnType<typeof getNextMissingField>, draft: OrderDraft): string {
   switch (field) {
     case 'event_type':
       return 'I can help with that. What kind of event is the cake for?'
     case 'event_date':
-      return 'Great. What date is the event?'
+      return draft.event_type
+        ? `Got it, this is for a ${draft.event_type.toLowerCase()}. What date is the event?`
+        : 'Great. What date is the event?'
     case 'serving_size':
-      return 'About how many people should the cake serve?'
+      return draft.event_date
+        ? `Perfect, I have the date as ${draft.event_date}. About how many people should the cake serve?`
+        : 'About how many people should the cake serve?'
     case 'cake_description':
-      return 'What style or design would you like for the cake? Feel free to mention flavors, colors, theme, or tiers.'
+      return 'Lovely. What style, flavor, or design would you like for the cake? Feel free to mention colors, theme, or tiers.'
     case 'customer_name':
-      return 'What name should I put on the order request?'
+      return 'Great, I have the cake details. What name should I put on the order request?'
     case 'customer_email':
-      return 'What is the best email address for the quote and follow-up?'
+      return draft.customer_name
+        ? `Thanks, ${draft.customer_name}. What is the best email address for the quote and follow-up?`
+        : 'What is the best email address for the quote and follow-up?'
     case 'customer_phone':
       return 'What phone number should the team use if they need to confirm any details?'
     default:
@@ -446,6 +499,42 @@ function finalizeDraft(draft: OrderDraft): OrderCapture {
     serving_size: draft.serving_size,
     design_preferences: draft.design_preferences,
   }
+}
+
+function summarizeDraft(draft: OrderDraft) {
+  const summaryParts = [
+    draft.event_type ? `${draft.event_type} cake` : 'cake order',
+    draft.event_date ? `for ${draft.event_date}` : undefined,
+    draft.serving_size ? `serving ${draft.serving_size}` : undefined,
+    draft.cake_description ? `with ${draft.cake_description}` : undefined,
+    draft.dietary_restrictions && draft.dietary_restrictions !== 'none'
+      ? `dietary note: ${draft.dietary_restrictions}`
+      : undefined,
+  ].filter(Boolean)
+
+  return summaryParts.join(', ')
+}
+
+function buildOrderContextPrompt(draft: OrderDraft, wantsOrder: boolean) {
+  const capturedFields = [
+    `event_type: ${draft.event_type || 'missing'}`,
+    `event_date: ${draft.event_date || 'missing'}`,
+    `serving_size: ${draft.serving_size || 'missing'}`,
+    `cake_description: ${draft.cake_description || 'missing'}`,
+    `design_preferences: ${draft.design_preferences || 'missing'}`,
+    `dietary_restrictions: ${draft.dietary_restrictions || 'missing'}`,
+    `customer_name: ${draft.customer_name || 'missing'}`,
+    `customer_email: ${draft.customer_email || 'missing'}`,
+    `customer_phone: ${draft.customer_phone || 'missing'}`,
+  ]
+
+  return `Current order context:
+- Order in progress: ${wantsOrder ? 'yes' : 'no'}
+- Next missing field: ${wantsOrder ? getNextMissingField(draft) || 'none' : 'n/a'}
+- Captured fields:
+${capturedFields.map((field) => `  - ${field}`).join('\n')}
+
+When the user gives a short answer, interpret it as the answer to the current missing field when that makes sense.`
 }
 
 function matchesAny(message: string, keywords: string[]) {
