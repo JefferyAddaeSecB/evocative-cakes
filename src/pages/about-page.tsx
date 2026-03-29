@@ -71,8 +71,8 @@ export default function AboutPage() {
               className="relative"
             >
               <img
-                src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
-                alt="Our bakery team"
+                src="/images/gallery/Wedding-Cakes/main%201.jpg"
+                alt="Signature EVO Cakes wedding design"
                 className="rounded-3xl shadow-2xl w-full h-[500px] object-cover"
               />
               {/* Floating heart badge */}
