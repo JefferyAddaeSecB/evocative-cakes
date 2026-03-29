@@ -63,6 +63,8 @@ TO anon
 WITH CHECK (bucket_id = 'order-images');
 ```
 
+If uploads ever fail with `new row violates row-level security policy`, run `supabase-storage-fix.sql` in the Supabase SQL Editor to recreate the bucket rules cleanly.
+
 ---
 
 ## Step 4: Create Admin User

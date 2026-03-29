@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Sparkles } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 import ImageUploadZone from '@/components/ImageUploadZone'
 import { createOrder } from '@/lib/supabase'
 
@@ -17,17 +16,25 @@ interface ContactFormData {
   servingSize: string
 }
 
+interface FormFeedback {
+  tone: 'success' | 'warning' | 'error'
+  title: string
+  description: string
+}
+
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const [formFeedback, setFormFeedback] = useState<FormFeedback | null>(null)
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>()
 
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true)
+    setFormFeedback(null)
 
     try {
       // Create order in Supabase with images
-      await createOrder({
+      const result = await createOrder({
         source: 'contact_form',
         customer_name: data.name,
         customer_email: data.email,
@@ -40,12 +47,31 @@ export default function ContactPage() {
         design_preferences: undefined
       }, uploadedImages)
 
-      toast.success('Thank you! Your cake order request has been received. We\'ll get back to you soon!')
       reset()
       setUploadedImages([])
+
+      if (result.hasImageUploadIssues) {
+        setFormFeedback({
+          tone: 'warning',
+          title: 'Your cake request was received.',
+          description: result.hasStoragePolicyIssue
+            ? 'Our team will contact you within the next 24 hours. Your inspiration image could not be attached this time, so we may ask you to resend it.'
+            : 'Our team will contact you within the next 24 hours. Some inspiration images could not be attached, but your request has been received.',
+        })
+      } else {
+        setFormFeedback({
+          tone: 'success',
+          title: 'Your cake request was sent successfully.',
+          description: 'Our team will contact you within the next 24 hours.',
+        })
+      }
     } catch (error) {
       console.error('Error submitting form:', error)
-      toast.error('Oops! Something went wrong. Please try again or contact us directly.')
+      setFormFeedback({
+        tone: 'error',
+        title: 'We could not submit your request.',
+        description: 'Please try again or contact us directly and our team will assist you.',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -217,6 +243,22 @@ export default function ContactPage() {
                 >
                   {isSubmitting ? 'Sending...' : 'Send My Cake Request'}
                 </button>
+
+                {formFeedback && (
+                  <div
+                    aria-live="polite"
+                    className={`rounded-2xl border px-5 py-4 text-sm shadow-sm ${
+                      formFeedback.tone === 'success'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                        : formFeedback.tone === 'warning'
+                          ? 'border-amber-200 bg-amber-50 text-amber-900'
+                          : 'border-red-200 bg-red-50 text-red-900'
+                    }`}
+                  >
+                    <p className="font-semibold">{formFeedback.title}</p>
+                    <p className="mt-1 leading-relaxed">{formFeedback.description}</p>
+                  </div>
+                )}
               </form>
             </motion.div>
 

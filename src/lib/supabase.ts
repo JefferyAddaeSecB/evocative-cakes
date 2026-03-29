@@ -58,6 +58,14 @@ export const supabase = new Proxy({} as SupabaseClient, {
   },
 }) as SupabaseClient
 
+export interface CreateOrderResult {
+  order: any
+  uploadedImageCount: number
+  failedImageCount: number
+  hasImageUploadIssues: boolean
+  hasStoragePolicyIssue: boolean
+}
+
 function extractOrderImagePath(imageReference: string) {
   const trimmedReference = imageReference.trim()
 
@@ -172,6 +180,7 @@ export async function uploadOrderImage(file: File, orderId: string): Promise<str
     .from(ORDER_IMAGE_BUCKET)
     .upload(filePath, file, {
       cacheControl: '3600',
+      contentType: file.type || undefined,
       upsert: false
     })
 
@@ -217,7 +226,7 @@ export async function createOrder(orderData: {
   dietary_restrictions?: string
   serving_size?: string
   design_preferences?: string
-}, images?: File[]) {
+}, images?: File[]): Promise<CreateOrderResult> {
   const client = getSupabaseClient()
   const normalizedOrderData = {
     ...orderData,
@@ -235,23 +244,53 @@ export async function createOrder(orderData: {
     throw orderError
   }
 
+  let uploadedImageCount = 0
+  let failedImageCount = 0
+  let hasStoragePolicyIssue = false
+
   // Upload images if provided
   if (images && images.length > 0 && order) {
-    const imageUploadPromises = images.map(async (file) => {
-      const imagePath = await uploadOrderImage(file, (order as any).id)
+    const imageUploadResults = await Promise.allSettled(
+      images.map(async (file) => {
+        const imagePath = await uploadOrderImage(file, (order as any).id)
+        const { error } = await client.from('order_images').insert([{
+          order_id: (order as any).id,
+          image_url: imagePath,
+          file_name: file.name,
+          file_size: file.size
+        }] as any)
 
-      return client.from('order_images').insert([{
-        order_id: (order as any).id,
-        image_url: imagePath,
-        file_name: file.name,
-        file_size: file.size
-      }] as any)
-    })
+        if (error) {
+          throw error
+        }
 
-    await Promise.all(imageUploadPromises)
+        return imagePath
+      })
+    )
+
+    uploadedImageCount = imageUploadResults.filter((result) => result.status === 'fulfilled').length
+    failedImageCount = imageUploadResults.length - uploadedImageCount
+
+    hasStoragePolicyIssue = imageUploadResults.some(
+      (result) =>
+        result.status === 'rejected' &&
+        /row-level security policy/i.test(
+          result.reason instanceof Error ? result.reason.message : String(result.reason)
+        )
+    )
+
+    if (failedImageCount > 0) {
+      console.error('One or more order image uploads failed:', imageUploadResults)
+    }
   }
 
-  return order
+  return {
+    order,
+    uploadedImageCount,
+    failedImageCount,
+    hasImageUploadIssues: failedImageCount > 0,
+    hasStoragePolicyIssue,
+  }
 }
 
 // Helper function to get order with images
