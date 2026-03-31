@@ -15,6 +15,7 @@ type GalleryLeafCategory = Exclude<GalleryCategory, 'All'>
 interface GalleryImage {
   id: number
   src: string
+  previewSrc: string
   alt: string
   category: GalleryLeafCategory
 }
@@ -151,6 +152,9 @@ const galleryFileMap: Record<GalleryLeafCategory, string[]> = {
 const buildGallerySrc = (folder: string, fileName: string) =>
   `/images/gallery/${encodeURIComponent(folder)}/${encodeURIComponent(fileName)}`
 
+const buildGalleryPreviewSrc = (folder: string, fileName: string) =>
+  `/images/gallery-previews/${encodeURIComponent(folder)}/${encodeURIComponent(fileName)}`
+
 const buildAltText = (
   category: GalleryLeafCategory,
   fileName: string,
@@ -177,6 +181,7 @@ const galleryImages: GalleryImage[] = galleryContentCategories.flatMap((category
   galleryFileMap[category].map((fileName, index) => ({
     id: nextImageId++,
     src: buildGallerySrc(galleryFolders[category], fileName),
+    previewSrc: buildGalleryPreviewSrc(galleryFolders[category], fileName),
     alt: buildAltText(category, fileName, index),
     category,
   }))
@@ -260,17 +265,19 @@ export default function GalleryGrid() {
             <motion.div
               key={image.id}
               className="group relative h-80 cursor-pointer overflow-hidden rounded-2xl shadow-xl"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              viewport={{ once: true }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              viewport={{ once: true, amount: 0.12, margin: '180px 0px' }}
               onClick={() => setLightboxIndex(index)}
             >
               <img
-                src={image.src}
+                src={image.previewSrc}
                 alt={image.alt}
-                loading="lazy"
+                loading={index < 6 ? 'eager' : 'lazy'}
                 decoding="async"
+                fetchPriority={index < 3 ? 'high' : 'auto'}
+                sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
 
