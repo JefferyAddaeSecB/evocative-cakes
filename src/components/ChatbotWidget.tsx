@@ -276,7 +276,7 @@ export default function ChatbotWidget() {
         const orderSignature = createOrderSignature(orderData)
 
         if (lastSubmittedOrderRef.current !== orderSignature) {
-          await createOrder(
+          const result = await createOrder(
             {
               source: 'chatbot',
               customer_name: orderData.customer_name,
@@ -293,7 +293,11 @@ export default function ChatbotWidget() {
           )
 
           lastSubmittedOrderRef.current = orderSignature
-          toast.success("Your cake request has been sent. We'll follow up soon.")
+          toast.success(
+            result.customerAcknowledgementSent
+              ? "Your cake request has been received. A confirmation email is on the way."
+              : "Your cake request has been received. We'll follow up soon."
+          )
         }
       }
 

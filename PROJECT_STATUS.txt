@@ -25,7 +25,7 @@
    ├── Pages (5 pages)
    │   ├── home-page.tsx           Landing page
    │   ├── about-page.tsx          About page
-   │   ├── cakes-page.tsx          Cakes catalog
+   │   ├── faq-page.tsx            Frequently asked questions
    │   ├── gallery-page.tsx        Gallery
    │   └── contact-page.tsx        Contact form
    ├── Components (6 components)
@@ -93,7 +93,7 @@ Dev Server Speed (HMR)                <100ms reload time
 
 / ........................... Home (Landing page)
 /about ....................... About (Company story)
-/cakes ....................... Cakes (Catalog)
+/faq ......................... FAQ
 /gallery ..................... Gallery (Portfolio)
 /contact ..................... Contact (Contact form)
 

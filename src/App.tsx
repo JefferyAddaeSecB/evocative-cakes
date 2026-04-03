@@ -8,7 +8,6 @@ import FloatingBackground from '@/components/FloatingBackground'
 const ChatbotWidget = lazy(() => import('@/components/ChatbotWidget'))
 const HomePage = lazy(() => import('@/pages/home-page'))
 const AboutPage = lazy(() => import('@/pages/about-page'))
-const CakesPage = lazy(() => import('@/pages/cakes-page'))
 const GalleryPage = lazy(() => import('@/pages/gallery-page'))
 const ContactPage = lazy(() => import('@/pages/contact-page'))
 const FAQPage = lazy(() => import('@/pages/faq-page'))
@@ -61,7 +60,6 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'about', element: <AboutPage /> },
-      { path: 'cakes', element: <CakesPage /> },
       { path: 'gallery', element: <GalleryPage /> },
       { path: 'contact', element: <ContactPage /> },
       { path: 'faq', element: <FAQPage /> },

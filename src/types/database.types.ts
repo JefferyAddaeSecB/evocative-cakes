@@ -22,7 +22,7 @@ export interface Database {
           dietary_restrictions: string | null
           serving_size: string | null
           design_preferences: string | null
-          status: 'new' | 'in_progress' | 'completed'
+          status: 'new' | 'started' | 'in_progress' | 'completed'
           admin_notes: string | null
           created_at: string
           updated_at: string
@@ -40,7 +40,7 @@ export interface Database {
           dietary_restrictions?: string | null
           serving_size?: string | null
           design_preferences?: string | null
-          status?: 'new' | 'in_progress' | 'completed'
+          status?: 'new' | 'started' | 'in_progress' | 'completed'
           admin_notes?: string | null
           created_at?: string
           updated_at?: string
@@ -58,11 +58,58 @@ export interface Database {
           dietary_restrictions?: string | null
           serving_size?: string | null
           design_preferences?: string | null
-          status?: 'new' | 'in_progress' | 'completed'
+          status?: 'new' | 'started' | 'in_progress' | 'completed'
           admin_notes?: string | null
           created_at?: string
           updated_at?: string
           completed_at?: string | null
+        }
+      }
+      gallery_images: {
+        Row: {
+          id: string
+          placement: 'gallery' | 'hero'
+          category: 'Wedding Cakes' | 'Birthday Cakes' | 'Cupcakes' | 'Cookies & Treats' | 'Custom Cakes' | null
+          title: string | null
+          description: string | null
+          alt_text: string | null
+          storage_path: string
+          sort_order: number
+          is_published: boolean
+          is_archived: boolean
+          created_at: string
+          updated_at: string
+          archived_at: string | null
+        }
+        Insert: {
+          id?: string
+          placement: 'gallery' | 'hero'
+          category?: 'Wedding Cakes' | 'Birthday Cakes' | 'Cupcakes' | 'Cookies & Treats' | 'Custom Cakes' | null
+          title?: string | null
+          description?: string | null
+          alt_text?: string | null
+          storage_path: string
+          sort_order?: number
+          is_published?: boolean
+          is_archived?: boolean
+          created_at?: string
+          updated_at?: string
+          archived_at?: string | null
+        }
+        Update: {
+          id?: string
+          placement?: 'gallery' | 'hero'
+          category?: 'Wedding Cakes' | 'Birthday Cakes' | 'Cupcakes' | 'Cookies & Treats' | 'Custom Cakes' | null
+          title?: string | null
+          description?: string | null
+          alt_text?: string | null
+          storage_path?: string
+          sort_order?: number
+          is_published?: boolean
+          is_archived?: boolean
+          created_at?: string
+          updated_at?: string
+          archived_at?: string | null
         }
       }
       order_images: {

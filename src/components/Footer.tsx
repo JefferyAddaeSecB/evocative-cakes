@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Heart, Phone, Mail, MapPin, Cake } from 'lucide-react'
+import { Heart, Phone, Mail, MapPin, Cake, Instagram } from 'lucide-react'
 import { useMemo } from 'react'
 
 const quickLinks = [
   { label: 'Home', href: '/' },
   { label: 'About Us', href: '/about' },
-  { label: 'Our Cakes', href: '/cakes' },
+  { label: 'FAQ', href: '/faq' },
   { label: 'Gallery', href: '/gallery' },
 ]
 
@@ -144,10 +144,10 @@ export default function Footer() {
               <motion.li whileHover={{ x: 5 }} className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-pink-500 mt-0.5 flex-shrink-0" />
                 <a
-                  href="mailto:info@evocakes.com"
+                  href="mailto:evocativecakes@gmail.com"
                   className="text-gray-400 hover:text-pink-500 transition-colors text-sm no-underline"
                 >
-                  info@evocakes.com
+                  evocativecakes@gmail.com
                 </a>
               </motion.li>
               <motion.li whileHover={{ x: 5 }} className="flex items-start gap-3">
@@ -169,17 +169,40 @@ export default function Footer() {
           >
             <h4 className="text-lg font-semibold mb-6">Follow Us</h4>
             <div className="flex gap-4">
-              {['facebook', 'instagram', 'twitter', 'pinterest'].map((social) => (
+              {/* Instagram */}
+              <div className="group relative">
                 <AMotion
-                  key={social}
+                  href="https://www.instagram.com/evocativecakes/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.2, rotate: 10 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white hover:from-pink-600 hover:to-purple-700 transition-all"
+                >
+                  <Instagram size={20} />
+                </AMotion>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  Instagram
+                </div>
+              </div>
+
+              {/* Pinterest */}
+              <div className="group relative">
+                <AMotion
                   href="#"
                   whileHover={{ scale: 1.2, rotate: 10 }}
                   whileTap={{ scale: 0.9 }}
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center text-gray-400 hover:text-pink-500 transition-colors"
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white hover:from-red-700 hover:to-red-800 transition-all"
                 >
-                  {social.charAt(0).toUpperCase()}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" fill="currentColor" />
+                    <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="bold" fill="white" fontFamily="Arial">P</text>
+                  </svg>
                 </AMotion>
-              ))}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  Pinterest
+                </div>
+              </div>
             </div>
           </DivMotion>
         </div>

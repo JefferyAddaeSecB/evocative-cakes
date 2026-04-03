@@ -142,7 +142,7 @@ src/
 ├── pages/
 │   ├── home-page.tsx       # Home/landing page
 │   ├── about-page.tsx      # About page
-│   ├── cakes-page.tsx      # Cakes catalog
+│   ├── faq-page.tsx        # Frequently asked questions
 │   ├── gallery-page.tsx    # Gallery
 │   └── contact-page.tsx    # Contact form
 ├── components/
@@ -204,7 +204,7 @@ VITE_CALENDLY_API_KEY=
 
 - **Home** (`/`) - Landing page with hero section
 - **About** (`/about`) - Company story and stats
-- **Cakes** (`/cakes`) - Cake catalog and ordering
+- **FAQ** (`/faq`) - Customer questions, policies, and ordering guidance
 - **Gallery** (`/gallery`) - Portfolio of creations
 - **Contact** (`/contact`) - Contact form and information
 

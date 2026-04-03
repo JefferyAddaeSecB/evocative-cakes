@@ -153,7 +153,7 @@ export default function TermsPage() {
                   For questions about these Terms of Service, please contact us at:
                 </p>
                 <div className="mt-3 text-gray-700 space-y-1">
-                  <p><strong>Email:</strong> hello@evocakes.com</p>
+                  <p><strong>Email:</strong> evocativecakes@gmail.com</p>
                   <p><strong>Phone:</strong> (555) 123-CAKE</p>
                 </div>
               </div>

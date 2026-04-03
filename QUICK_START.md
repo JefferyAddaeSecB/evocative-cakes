@@ -84,7 +84,7 @@ src/
 ├── pages/                 # Route pages
 │   ├── home-page.tsx      # /
 │   ├── about-page.tsx     # /about
-│   ├── cakes-page.tsx     # /cakes
+│   ├── faq-page.tsx       # /faq
 │   ├── gallery-page.tsx   # /gallery
 │   └── contact-page.tsx   # /contact
 │
@@ -117,7 +117,7 @@ The app uses **React Router v6** for client-side routing:
 <Routes>
   <Route path="/" element={<HomePage />} />
   <Route path="/about" element={<AboutPage />} />
-  <Route path="/cakes" element={<CakesPage />} />
+  <Route path="/faq" element={<FAQPage />} />
   <Route path="/gallery" element={<GalleryPage />} />
   <Route path="/contact" element={<ContactPage />} />
 </Routes>
@@ -138,7 +138,7 @@ import { Link } from 'react-router-dom'
 ```tsx
 import { Link } from 'react-router-dom'
 
-<Link to="/cakes">View Cakes</Link>
+<Link to="/faq">View FAQ</Link>
 ```
 
 ### 2. Firebase Auth

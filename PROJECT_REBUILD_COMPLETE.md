@@ -57,7 +57,7 @@ src/
 ### 4. ✅ All Pages Migrated
 - ✅ Home page (`/`) - Landing page with hero
 - ✅ About page (`/about`) - Company story
-- ✅ Cakes page (`/cakes`) - Cake catalog
+- ✅ FAQ page (`/faq`) - Customer questions and ordering guidance
 - ✅ Gallery page (`/gallery`) - Portfolio
 - ✅ Contact page (`/contact`) - Contact form
 
@@ -146,7 +146,7 @@ npm run dev
 ### 4. Test All Routes
 - http://localhost:3000/ 
 - http://localhost:3000/about
-- http://localhost:3000/cakes
+- http://localhost:3000/faq
 - http://localhost:3000/gallery
 - http://localhost:3000/contact
 
@@ -193,7 +193,7 @@ index.css                   Global styles
 pages/
 ├── home-page.tsx
 ├── about-page.tsx
-├── cakes-page.tsx
+├── faq-page.tsx
 ├── gallery-page.tsx
 └── contact-page.tsx
 

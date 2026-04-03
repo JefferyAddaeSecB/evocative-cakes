@@ -69,7 +69,7 @@ Choose based on your needs:
 │   ├── 📄 pages/                  ← Route pages
 │   │   ├── home-page.tsx
 │   │   ├── about-page.tsx
-│   │   ├── cakes-page.tsx
+│   │   ├── faq-page.tsx
 │   │   ├── gallery-page.tsx
 │   │   └── contact-page.tsx
 │   │
@@ -135,7 +135,7 @@ npm run lint                # Run ESLint
 |------|-------|---------|
 | `src/pages/home-page.tsx` | `/` | Landing page |
 | `src/pages/about-page.tsx` | `/about` | About page |
-| `src/pages/cakes-page.tsx` | `/cakes` | Cake catalog |
+| `src/pages/faq-page.tsx` | `/faq` | Frequently asked questions |
 | `src/pages/gallery-page.tsx` | `/gallery` | Gallery |
 | `src/pages/contact-page.tsx` | `/contact` | Contact form |
 

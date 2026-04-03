@@ -9,7 +9,7 @@ import { Cake, Sparkles, Menu, X } from "lucide-react"
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
-  { label: "Cakes", href: "/cakes" },
+  { label: "FAQ", href: "/faq" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact Us", href: "/contact" },
 ]

@@ -8,7 +8,7 @@ import { useMemo } from "react"
 const quickLinks = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
-  { label: "Our Cakes", href: "/cakes" },
+  { label: "FAQ", href: "/faq" },
   { label: "Gallery", href: "/gallery" },
 ]
 
@@ -155,7 +155,7 @@ export default function Footer() {
                 <motion.div whileHover={{ scale: 1.2, rotate: 10 }}>
                   <Mail className="w-4 h-4" />
                 </motion.div>
-                hello@evocakes.com
+                evocativecakes@gmail.com
               </motion.div>
               <motion.div
                 whileHover={{ x: 5 }}

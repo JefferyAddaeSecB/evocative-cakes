@@ -45,7 +45,7 @@ src/
 ├── pages/
 │   ├── home-page.tsx
 │   ├── about-page.tsx
-│   ├── cakes-page.tsx
+│   ├── faq-page.tsx
 │   ├── gallery-page.tsx
 │   └── contact-page.tsx
 ├── components/
@@ -183,7 +183,7 @@ All 25+ components are installed and ready:
 5. **Test All Routes**
    - http://localhost:3000/ (Home)
    - http://localhost:3000/about (About)
-   - http://localhost:3000/cakes (Cakes)
+   - http://localhost:3000/faq (FAQ)
    - http://localhost:3000/gallery (Gallery)
    - http://localhost:3000/contact (Contact)
 

@@ -50,19 +50,23 @@ export default function ContactPage() {
       reset()
       setUploadedImages([])
 
+      const acknowledgementMessage = result.customerAcknowledgementSent
+        ? 'A confirmation email has been sent and our team will follow up within the next 24 hours.'
+        : 'Our team will follow up within the next 24 hours.'
+
       if (result.hasImageUploadIssues) {
         setFormFeedback({
           tone: 'warning',
           title: 'Your cake request was received.',
           description: result.hasStoragePolicyIssue
-            ? 'Our team will contact you within the next 24 hours. Your inspiration image could not be attached this time, so we may ask you to resend it.'
-            : 'Our team will contact you within the next 24 hours. Some inspiration images could not be attached, but your request has been received.',
+            ? `${acknowledgementMessage} Your inspiration image could not be attached this time, so we may ask you to resend it.`
+            : `${acknowledgementMessage} Some inspiration images could not be attached, but your request has been received.`,
         })
       } else {
         setFormFeedback({
           tone: 'success',
           title: 'Your cake request was sent successfully.',
-          description: 'Our team will contact you within the next 24 hours.',
+          description: acknowledgementMessage,
         })
       }
     } catch (error) {
@@ -78,40 +82,40 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20">
-      <section className="py-20 px-4">
+    <div className="min-h-screen pt-16 md:pt-20">
+      <section className="px-4 pb-10 pt-8 sm:pt-10 md:py-20">
         <div className="container mx-auto max-w-6xl">
           {/* HEADER */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
+            className="mb-10 text-center md:mb-16"
           >
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Sparkles className="w-6 h-6 text-yellow-500" />
-              <span className="text-lg font-medium text-purple-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-200">
+            <div className="mb-4 flex items-center justify-center space-x-2 md:mb-6">
+              <Sparkles className="h-5 w-5 text-yellow-500 md:h-6 md:w-6" />
+              <span className="rounded-full border border-purple-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-purple-600 backdrop-blur-sm md:px-4 md:py-2 md:text-lg">
                 Get In Touch
               </span>
             </div>
 
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mt-4 mb-4">
+            <h1 className="mt-2 mb-3 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent sm:text-5xl md:mt-4 md:mb-4 md:text-6xl">
               Contact Us
             </h1>
 
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="mx-auto max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg md:max-w-2xl md:text-xl">
               Let's bring your vision to life. Fill out the form below and we'll get back to you within 24 hours.
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
             {/* LEFT - Form */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-purple-100"
+              className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-2xl backdrop-blur-sm sm:p-8"
             >
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Order Details</h2>
+              <h2 className="mb-6 text-xl font-bold text-gray-800 sm:text-2xl">Order Details</h2>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Name */}
@@ -269,9 +273,9 @@ export default function ContactPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-purple-100"
+                className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm sm:p-8"
               >
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">Contact Information</h3>
+                <h3 className="mb-6 text-xl font-bold text-gray-800 sm:text-2xl">Contact Information</h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 text-gray-600">
                     <div className="w-12 h-12 bg-gradient-to-r from-pink-100 to-purple-100 rounded-full flex items-center justify-center">
@@ -294,7 +298,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Email</p>
-                      <p className="font-semibold text-gray-800">hello@evocakes.com</p>
+                      <p className="font-semibold text-gray-800">evocativecakes@gmail.com</p>
                     </div>
                   </div>
 
@@ -315,9 +319,9 @@ export default function ContactPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-purple-100"
+                className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm sm:p-8"
               >
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">Business Hours</h3>
+                <h3 className="mb-6 text-xl font-bold text-gray-800 sm:text-2xl">Business Hours</h3>
                 <div className="space-y-3 text-gray-600">
                   <div className="flex items-center justify-between">
                     <span>Monday - Friday</span>
@@ -339,7 +343,7 @@ export default function ContactPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-gradient-to-r from-pink-100/80 to-purple-100/80 backdrop-blur-sm rounded-3xl p-8 border border-purple-200"
+                className="rounded-3xl border border-purple-200 bg-gradient-to-r from-pink-100/80 to-purple-100/80 p-6 backdrop-blur-sm sm:p-8"
               >
                 <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-purple-600" />

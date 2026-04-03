@@ -18,7 +18,7 @@ export default function AnimatedBackground() {
   )
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
       {/* Large animated blobs - 3D floating effect */}
       <BlobMotion
         animate={{
@@ -85,7 +85,7 @@ export default function AnimatedBackground() {
         className="absolute -top-1/4 -left-1/4 w-full h-full max-w-5xl max-h-5xl bg-gradient-to-r from-pink-400/20 via-purple-400/20 to-blue-400/20 rounded-full blur-3xl"
       />
 
-      {/* Floating particles - enhanced */}
+      {/* Floating particles */}
       {particles.map((particle) => (
         <BlobMotion
           key={particle.id}
@@ -93,7 +93,6 @@ export default function AnimatedBackground() {
             y: [0, -window.innerHeight - 100, 0],
             x: [0, Math.sin(particle.id) * 50, 0],
             opacity: [0, 1, 0.8, 0.2, 0],
-            scale: [0, 1, 1, 0.8, 0],
           }}
           transition={{
             duration: particle.duration,
@@ -112,22 +111,6 @@ export default function AnimatedBackground() {
           }}
         />
       ))}
-
-      {/* Radial gradient overlay for depth */}
-      <motion.div
-        animate={{
-          opacity: [0.3, 0.6, 0.3],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute inset-0 bg-radial-gradient from-pink-500/5 via-transparent to-blue-500/5 pointer-events-none"
-      />
-
-      {/* Grid pattern for depth */}
-      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(236,72,153,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
     </div>
   )
 }

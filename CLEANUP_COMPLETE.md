@@ -67,7 +67,7 @@ dist/assets/index-Bd80OmKo.js   298.78 kB │ gzip: 93.69 kB
 ## 🎯 What Works Now
 
 ✅ **React Router SPA Navigation**
-- All 5 routes working (/, /about, /cakes, /gallery, /contact)
+- All key routes working (/, /about, /faq, /gallery, /contact)
 - Smooth page transitions
 - Active link indicators
 

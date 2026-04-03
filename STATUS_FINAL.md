@@ -124,7 +124,7 @@ evo-cakes-nextjs/
 │   ├── pages/
 │   │   ├── home-page.tsx               🎬 WITH ANIMATIONS
 │   │   ├── about-page.tsx
-│   │   ├── cakes-page.tsx
+│   │   ├── faq-page.tsx
 │   │   ├── gallery-page.tsx
 │   │   └── contact-page.tsx
 │   ├── components/

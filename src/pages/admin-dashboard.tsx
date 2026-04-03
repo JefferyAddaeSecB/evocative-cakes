@@ -1,91 +1,299 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LogOut, Phone, Mail, Calendar, User,
-  MessageSquare, Image as ImageIcon, CheckCircle2,
-  Circle, Clock3, RefreshCw, Search
+  ArrowDown,
+  ArrowUp,
+  AlertTriangle,
+  Archive,
+  BellRing,
+  Calendar,
+  CheckCircle2,
+  Circle,
+  ClipboardList,
+  Clock3,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  ImagePlus,
+  LogOut,
+  Mail,
+  MessageSquare,
+  Pencil,
+  Phone,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  User,
 } from 'lucide-react'
 import {
-  supabase,
+  archiveWebsiteMedia,
+  createWebsiteMedia,
+  deleteWebsiteMedia,
+  getAdminWebsiteMedia,
   getAllOrders,
+  moveWebsiteMedia,
   resolveOrderImageUrl,
+  restoreWebsiteMedia,
+  sendCustomerOrderStatusNotification,
+  setWebsiteMediaPublishedState,
   subscribeToOrders,
+  supabase,
   updateOrderStatus,
+  updateWebsiteMedia,
+  type OrderWithImages,
+  type WebsiteMediaItem,
 } from '@/lib/supabase'
+import {
+  buildAdminNewOrderNotification,
+  buildCustomerOrderAcknowledgementNotification,
+  buildCustomerOrderStatusNotification,
+  buildDashboardOrderLink,
+} from '@/lib/admin-notifications'
+import {
+  canAdvanceOrderStatus,
+  formatOrderStatus,
+  galleryContentCategories,
+  getNextOrderStatus,
+  mediaPlacementLabels,
+  orderStatusDescriptions,
+  orderStatusLabels,
+  orderStatuses,
+  type GalleryContentCategory,
+  type MediaPlacement,
+  type OrderStatus,
+} from '@/lib/admin-workflow'
 import { toast } from 'sonner'
 
-interface Order {
-  id: string
-  source: string
-  customer_name: string
-  customer_email: string
-  customer_phone: string
-  event_type: string | null
-  event_date: string | null
-  cake_description: string
-  design_preferences: string | null
-  dietary_restrictions: string | null
-  serving_size: string | null
-  status: 'new' | 'in_progress' | 'completed'
-  created_at: string
-  order_images: Array<{
-    id: string
-    image_url: string
-    file_name: string | null
-    preview_url?: string
-  }>
+type AdminView = 'overview' | 'orders' | 'media' | 'notifications'
+type SourceFilter = 'all' | 'chatbot' | 'contact_form'
+type MediaStateFilter = 'all' | 'live' | 'draft' | 'archived'
+type ResolvedOrder = Omit<OrderWithImages, 'order_images'> & {
+  order_images: Array<OrderWithImages['order_images'][number] & { preview_url?: string }>
+}
+
+interface ConfirmationState {
+  title: string
+  message: string
+  actionLabel: string
+  tone: 'default' | 'danger'
+  onConfirm: () => Promise<void>
+}
+
+interface MediaFormState {
+  id: string | null
+  placement: MediaPlacement
+  category: GalleryContentCategory | ''
+  title: string
+  description: string
+  alt_text: string
+  sort_order: string
+  is_published: boolean
+}
+
+const adminViews: Array<{
+  id: AdminView
+  label: string
+  description: string
+  icon: typeof ClipboardList
+}> = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    description: 'Operational summary',
+    icon: ShieldCheck,
+  },
+  {
+    id: 'orders',
+    label: 'Orders',
+    description: 'Pipeline and status management',
+    icon: ClipboardList,
+  },
+  {
+    id: 'media',
+    label: 'Media',
+    description: 'Live website image control',
+    icon: ImagePlus,
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    description: 'Email and SMS drafts',
+    icon: BellRing,
+  },
+]
+
+const sourceLabels: Record<Exclude<SourceFilter, 'all'>, string> = {
+  chatbot: 'Chatbot',
+  contact_form: 'Contact Form',
+}
+
+const mediaPlacementOptions: MediaPlacement[] = ['gallery', 'hero']
+
+const defaultMediaFormState: MediaFormState = {
+  id: null,
+  placement: 'gallery',
+  category: 'Wedding Cakes',
+  title: '',
+  description: '',
+  alt_text: '',
+  sort_order: '0',
+  is_published: true,
+}
+
+const previewOrder = {
+  id: 'preview-order',
+  customer_name: 'Jordan Lee',
+  customer_email: 'customer@example.com',
+  customer_phone: '+1 416-555-0189',
+  event_type: 'Birthday',
+  event_date: '2026-05-24',
+  cake_description: 'Two-tier buttercream cake in blush, ivory, and gold with fresh florals.',
+  design_preferences: 'Clean finish, floral front cascade, and matching cupcakes.',
+  dietary_restrictions: 'No nuts',
+  serving_size: '30-35 guests',
+}
+
+function isAdminView(value: string | null): value is AdminView {
+  return value === 'overview' || value === 'orders' || value === 'media' || value === 'notifications'
+}
+
+function formatEventDate(value: string | null) {
+  if (!value) {
+    return 'Date not provided'
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function getStatusClasses(status: OrderStatus) {
+  switch (status) {
+    case 'new':
+      return 'border-orange-200 bg-orange-100 text-orange-700'
+    case 'started':
+      return 'border-sky-200 bg-sky-100 text-sky-700'
+    case 'in_progress':
+      return 'border-purple-200 bg-purple-100 text-purple-700'
+    case 'completed':
+      return 'border-emerald-200 bg-emerald-100 text-emerald-700'
+  }
+}
+
+function buildMediaFormState(item: WebsiteMediaItem): MediaFormState {
+  const normalizedCategory =
+    item.category && galleryContentCategories.includes(item.category as GalleryContentCategory)
+      ? (item.category as GalleryContentCategory)
+      : ''
+
+  return {
+    id: item.id,
+    placement: item.placement,
+    category: normalizedCategory,
+    title: item.title || '',
+    description: item.description || '',
+    alt_text: item.alt_text || '',
+    sort_order: String(item.sort_order),
+    is_published: item.is_published,
+  }
+}
+
+function buildNotificationConfigItems() {
+  return [
+    'Deploy the `admin-notifications` Supabase Edge Function.',
+    'Add `RESEND_API_KEY` and a verified-domain `RESEND_FROM_EMAIL` in Supabase secrets.',
+    'Add `REPLY_TO_EMAIL` if Gmail should receive customer replies.',
+    'Add `ADMIN_NOTIFICATION_EMAIL` and `ADMIN_NOTIFICATION_PHONE` for admin alerts.',
+    'Set `VITE_SITE_URL` so dashboard links in notification emails open the correct live site.',
+    'Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` if SMS alerts are required.',
+    'Run `supabase-admin-upgrade.sql` so the richer statuses and media tables exist in production.',
+  ]
 }
 
 export default function AdminDashboard() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedView = searchParams.get('view')
+  const initialView: AdminView = isAdminView(requestedView) ? requestedView : 'overview'
+  const focusOrderId = searchParams.get('order')
+
+  const [activeView, setActiveView] = useState<AdminView>(initialView)
+  const [orders, setOrders] = useState<ResolvedOrder[]>([])
+  const [mediaItems, setMediaItems] = useState<WebsiteMediaItem[]>([])
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true)
+  const [isLoadingMedia, setIsLoadingMedia] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<'all' | 'new' | 'in_progress' | 'completed'>('all')
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'chatbot' | 'contact_form'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | OrderStatus>('all')
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
-  const navigate = useNavigate()
+  const [mediaPlacementFilter, setMediaPlacementFilter] = useState<'all' | MediaPlacement>('all')
+  const [mediaStateFilter, setMediaStateFilter] = useState<MediaStateFilter>('all')
+  const [mediaSearchQuery, setMediaSearchQuery] = useState('')
+  const [mediaSetupMessage, setMediaSetupMessage] = useState<string | null>(null)
+  const [mediaForm, setMediaForm] = useState<MediaFormState>(defaultMediaFormState)
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [confirmationState, setConfirmationState] = useState<ConfirmationState | null>(null)
+  const [isConfirmingAction, setIsConfirmingAction] = useState(false)
+  const [isSavingMedia, setIsSavingMedia] = useState(false)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        navigate('/admin/login')
-      }
+    const requestedView = searchParams.get('view')
+
+    if (isAdminView(requestedView) && requestedView !== activeView) {
+      setActiveView(requestedView)
     }
+  }, [activeView, searchParams])
 
-    loadOrders()
-    checkAuth()
+  useEffect(() => {
+    if (focusOrderId) {
+      setActiveView('orders')
+      setFilterStatus('all')
+      setSourceFilter('all')
+    }
+  }, [focusOrderId])
 
-    // Subscribe to real-time updates
-    const subscription = subscribeToOrders((payload) => {
-      console.log('Real-time update:', payload)
-      void loadOrders(true)
-
-      if (payload.eventType === 'INSERT') {
-        toast.success('New order received!', {
-          description: `From ${payload.new.customer_name}`
-        })
+  const setView = (view: AdminView) => {
+    setActiveView(view)
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams)
+      nextParams.set('view', view)
+      if (view !== 'orders') {
+        nextParams.delete('order')
       }
+      return nextParams
     })
+  }
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [navigate])
+  const resetMediaForm = () => {
+    setMediaForm(defaultMediaFormState)
+    setMediaFile(null)
+  }
 
-  const loadOrders = async (backgroundRefresh = false) => {
+  const loadOrders = useCallback(async (backgroundRefresh = false) => {
     if (backgroundRefresh) {
       setIsRefreshing(true)
     } else {
-      setIsLoading(true)
+      setIsLoadingOrders(true)
     }
 
     try {
       const data = await getAllOrders()
       const ordersWithResolvedImages = await Promise.all(
-        ((data as Order[]) || []).map(async (order) => ({
+        data.map(async (order) => ({
           ...order,
           order_images: await Promise.all(
             (order.order_images || []).map(async (image) => ({
@@ -105,423 +313,1549 @@ export default function AdminDashboard() {
       if (backgroundRefresh) {
         setIsRefreshing(false)
       } else {
-        setIsLoading(false)
+        setIsLoadingOrders(false)
       }
     }
-  }
+  }, [])
+
+  const loadMedia = useCallback(async () => {
+    setIsLoadingMedia(true)
+    setMediaSetupMessage(null)
+
+    try {
+      const data = await getAdminWebsiteMedia()
+      setMediaItems(data)
+    } catch (error) {
+      console.error('Error loading media:', error)
+      setMediaItems([])
+
+      const message = error instanceof Error ? error.message : 'Failed to load website media'
+      if (/gallery_images|website-media|relation .* does not exist|does not exist/i.test(message)) {
+        setMediaSetupMessage(
+          'Live media management is not active yet. Run `supabase-admin-upgrade.sql` in Supabase, then refresh this dashboard.'
+        )
+      } else {
+        setMediaSetupMessage(message)
+      }
+    } finally {
+      setIsLoadingMedia(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        navigate('/admin/login')
+      }
+    }
+
+    void checkAuth()
+    void loadOrders()
+    void loadMedia()
+
+    const subscription = subscribeToOrders((payload) => {
+      void loadOrders(true)
+
+      if (payload.eventType === 'INSERT' && payload.new.customer_name) {
+        toast.success('New order received', {
+          description: `From ${payload.new.customer_name}`,
+        })
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [loadMedia, loadOrders, navigate])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate('/admin/login')
   }
 
-  const handleStatusChange = async (orderId: string, newStatus: 'new' | 'in_progress' | 'completed') => {
+  const queueConfirmation = (nextState: ConfirmationState) => {
+    setConfirmationState(nextState)
+  }
+
+  const handleConfirmAction = async () => {
+    if (!confirmationState) {
+      return
+    }
+
+    setIsConfirmingAction(true)
+
     try {
-      await updateOrderStatus(orderId, newStatus)
-      toast.success('Status updated!')
-      void loadOrders(true)
-    } catch (error) {
-      console.error('Error updating status:', error)
-      toast.error('Failed to update status')
+      await confirmationState.onConfirm()
+      setConfirmationState(null)
+    } finally {
+      setIsConfirmingAction(false)
     }
   }
 
+  const requestStatusChange = (order: ResolvedOrder, nextStatus: OrderStatus) => {
+    if (order.status === nextStatus) {
+      return
+    }
+
+    if (!canAdvanceOrderStatus(order.status, nextStatus)) {
+      const nextAllowedStatus = getNextOrderStatus(order.status)
+
+      if (nextAllowedStatus) {
+        toast.error(`Move this order to ${formatOrderStatus(nextAllowedStatus)} first.`)
+      } else {
+        toast.error('This order is already completed.')
+      }
+
+      return
+    }
+
+    queueConfirmation({
+      title: `Update ${order.customer_name} to ${formatOrderStatus(nextStatus)}?`,
+      message:
+        'This moves the order forward in the live workflow immediately. If notifications are configured, the customer will also receive a professional status update email.',
+      actionLabel: `Mark as ${formatOrderStatus(nextStatus)}`,
+      tone: 'default',
+      onConfirm: async () => {
+        try {
+          const updatedOrder = await updateOrderStatus(order.id, nextStatus, order.admin_notes)
+          const notificationResult = await sendCustomerOrderStatusNotification(updatedOrder, nextStatus, order.status)
+
+          if (notificationResult.success) {
+            toast.success(`Status updated to ${formatOrderStatus(nextStatus)}`, {
+              description: 'Customer update email sent successfully.',
+            })
+          } else {
+            toast.success(`Status updated to ${formatOrderStatus(nextStatus)}`, {
+              description: notificationResult.error
+                ? `Customer email was not sent: ${notificationResult.error}`
+                : 'Customer email was not sent.',
+            })
+          }
+
+          await loadOrders(true)
+        } catch (error) {
+          console.error('Error updating status:', error)
+          toast.error(error instanceof Error ? error.message : 'Failed to update status')
+        }
+      },
+    })
+  }
+
+  const handleMediaSubmit = () => {
+    const isEditing = Boolean(mediaForm.id)
+
+    if (!isEditing && !mediaFile) {
+      toast.error('Select an image before saving')
+      return
+    }
+
+    const sortOrder = Number.parseInt(mediaForm.sort_order || '0', 10)
+    const safeSortOrder = Number.isNaN(sortOrder) ? 0 : sortOrder
+
+    queueConfirmation({
+      title: isEditing ? 'Save live media changes?' : 'Publish this new website image?',
+      message:
+        'This affects the live website immediately when the item is published. Continue only if the content is ready for visitors.',
+      actionLabel: isEditing ? 'Save changes' : 'Upload image',
+      tone: 'default',
+      onConfirm: async () => {
+        setIsSavingMedia(true)
+
+        try {
+          if (mediaForm.id) {
+            await updateWebsiteMedia(
+              mediaForm.id,
+              {
+                placement: mediaForm.placement,
+                category: mediaForm.placement === 'gallery' ? mediaForm.category || null : null,
+                title: mediaForm.title,
+                description: mediaForm.description,
+                alt_text: mediaForm.alt_text,
+                sort_order: safeSortOrder,
+                is_published: mediaForm.is_published,
+              },
+              mediaFile || undefined
+            )
+
+            toast.success('Website media updated')
+          } else if (mediaFile) {
+            await createWebsiteMedia(
+              {
+                placement: mediaForm.placement,
+                category: mediaForm.placement === 'gallery' ? mediaForm.category || null : null,
+                title: mediaForm.title,
+                description: mediaForm.description,
+                alt_text: mediaForm.alt_text,
+                sort_order: safeSortOrder,
+                is_published: mediaForm.is_published,
+              },
+              mediaFile
+            )
+
+            toast.success('Website media uploaded')
+          }
+
+          resetMediaForm()
+          await loadMedia()
+        } catch (error) {
+          console.error('Error saving media:', error)
+          const message = error instanceof Error ? error.message : String(error)
+          if (/row.level security|rls|new row violates/i.test(message)) {
+            toast.error('Permission denied', { description: 'Your session may have expired. Try logging out and back in.' })
+          } else if (/storage|bucket|upload/i.test(message)) {
+            toast.error('Image upload failed', { description: message })
+          } else {
+            toast.error('Failed to save media', { description: message })
+          }
+        } finally {
+          setIsSavingMedia(false)
+        }
+      },
+    })
+  }
+
+  const requestToggleMediaVisibility = (item: WebsiteMediaItem, nextPublishedState: boolean) => {
+    queueConfirmation({
+      title: nextPublishedState ? 'Publish this image live?' : 'Hide this image from the website?',
+      message:
+        nextPublishedState
+          ? 'The image will immediately become visible on the live site if it is not archived.'
+          : 'The image will immediately stop appearing on the live site.',
+      actionLabel: nextPublishedState ? 'Publish image' : 'Hide image',
+      tone: 'default',
+      onConfirm: async () => {
+        try {
+          await setWebsiteMediaPublishedState(item.id, nextPublishedState)
+          toast.success(nextPublishedState ? 'Image published' : 'Image hidden')
+          await loadMedia()
+        } catch (error) {
+          console.error('Error updating publish state:', error)
+          const msg = error instanceof Error ? error.message : String(error)
+          toast.error('Failed to update visibility', { description: msg })
+        }
+      },
+    })
+  }
+
+  const requestArchiveMedia = (item: WebsiteMediaItem) => {
+    queueConfirmation({
+      title: 'Archive this image?',
+      message:
+        'Archived images are removed from the live website but kept in the system so they can be restored later.',
+      actionLabel: 'Archive image',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          await archiveWebsiteMedia(item.id)
+          toast.success('Image archived')
+          await loadMedia()
+        } catch (error) {
+          console.error('Error archiving media:', error)
+          const msg = error instanceof Error ? error.message : String(error)
+          toast.error('Failed to archive image', { description: msg })
+        }
+      },
+    })
+  }
+
+  const requestRestoreMedia = (item: WebsiteMediaItem) => {
+    queueConfirmation({
+      title: 'Restore this image?',
+      message:
+        'Restoring returns the image to the media library. If it remains published, it can appear on the live site immediately.',
+      actionLabel: 'Restore image',
+      tone: 'default',
+      onConfirm: async () => {
+        try {
+          await restoreWebsiteMedia(item.id)
+          toast.success('Image restored')
+          await loadMedia()
+        } catch (error) {
+          console.error('Error restoring media:', error)
+          const msg = error instanceof Error ? error.message : String(error)
+          toast.error('Failed to restore image', { description: msg })
+        }
+      },
+    })
+  }
+
+  const requestMoveMedia = (item: WebsiteMediaItem, direction: 'up' | 'down') => {
+    const siblingItems = mediaItems.filter(
+      (mediaItem) =>
+        mediaItem.placement === item.placement &&
+        mediaItem.is_archived === item.is_archived
+    )
+    const currentIndex = siblingItems.findIndex((mediaItem) => mediaItem.id === item.id)
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+    if (currentIndex === -1) {
+      toast.error('Unable to locate this image in the current library order.')
+      return
+    }
+
+    if (targetIndex < 0 || targetIndex >= siblingItems.length) {
+      toast.error(
+        direction === 'up'
+          ? 'This image is already at the top of its section.'
+          : 'This image is already at the bottom of its section.'
+      )
+      return
+    }
+
+    queueConfirmation({
+      title: direction === 'up' ? 'Move image up?' : 'Move image down?',
+      message:
+        'This changes the display order used by the live website and the admin media library.',
+      actionLabel: direction === 'up' ? 'Move up' : 'Move down',
+      tone: 'default',
+      onConfirm: async () => {
+        try {
+          await moveWebsiteMedia(item.id, direction)
+          toast.success('Image order updated')
+          await loadMedia()
+        } catch (error) {
+          console.error('Error moving media:', error)
+          const msg = error instanceof Error ? error.message : String(error)
+          toast.error('Failed to update image order', { description: msg })
+        }
+      },
+    })
+  }
+
+  const requestDeleteMedia = (item: WebsiteMediaItem) => {
+    queueConfirmation({
+      title: 'Delete this image permanently?',
+      message:
+        'This removes the image record and its stored file. This action cannot be undone.',
+      actionLabel: 'Delete permanently',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteWebsiteMedia(item.id)
+          if (mediaForm.id === item.id) {
+            resetMediaForm()
+          }
+          toast.success('Image deleted permanently')
+          await loadMedia()
+        } catch (error) {
+          console.error('Error deleting media:', error)
+          const msg = error instanceof Error ? error.message : String(error)
+          toast.error('Failed to delete image', { description: msg })
+        }
+      },
+    })
+  }
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
-  const filteredOrders = orders.filter((order) => {
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
-    const matchesSource = sourceFilter === 'all' || order.source === sourceFilter
+  const filteredOrders = orders
+    .filter((order) => {
+      const matchesStatus = filterStatus === 'all' || order.status === filterStatus
+      const matchesSource = sourceFilter === 'all' || order.source === sourceFilter
+      const matchesSearch =
+        normalizedSearchQuery.length === 0 ||
+        [
+          order.customer_name,
+          order.customer_email,
+          order.customer_phone,
+          order.event_type,
+          order.cake_description,
+          order.design_preferences,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedSearchQuery)
+
+      return matchesStatus && matchesSource && matchesSearch
+    })
+    .sort((left, right) => {
+      if (focusOrderId === left.id) {
+        return -1
+      }
+
+      if (focusOrderId === right.id) {
+        return 1
+      }
+
+      return new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+    })
+
+  const normalizedMediaSearchQuery = mediaSearchQuery.trim().toLowerCase()
+  const filteredMedia = mediaItems.filter((item) => {
+    const matchesPlacement = mediaPlacementFilter === 'all' || item.placement === mediaPlacementFilter
+
+    const matchesState =
+      mediaStateFilter === 'all' ||
+      (mediaStateFilter === 'archived' && item.is_archived) ||
+      (mediaStateFilter === 'live' && !item.is_archived && item.is_published) ||
+      (mediaStateFilter === 'draft' && !item.is_archived && !item.is_published)
+
     const matchesSearch =
-      normalizedSearchQuery.length === 0 ||
+      normalizedMediaSearchQuery.length === 0 ||
       [
-        order.customer_name,
-        order.customer_email,
-        order.customer_phone,
-        order.event_type,
-        order.cake_description,
-        order.design_preferences,
+        item.title,
+        item.description,
+        item.alt_text,
+        item.category,
+        item.placement,
       ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
-        .includes(normalizedSearchQuery)
+        .includes(normalizedMediaSearchQuery)
 
-    return matchesStatus && matchesSource && matchesSearch
+    return matchesPlacement && matchesState && matchesSearch
   })
 
   const stats = {
     total: orders.length,
-    new: orders.filter(o => o.status === 'new').length,
-    inProgress: orders.filter(o => o.status === 'in_progress').length,
-    completed: orders.filter(o => o.status === 'completed').length,
-    chatbot: orders.filter(o => o.source === 'chatbot').length,
-    contactForm: orders.filter(o => o.source === 'contact_form').length,
+    new: orders.filter((order) => order.status === 'new').length,
+    started: orders.filter((order) => order.status === 'started').length,
+    inProgress: orders.filter((order) => order.status === 'in_progress').length,
+    completed: orders.filter((order) => order.status === 'completed').length,
+    active: orders.filter((order) => order.status === 'started' || order.status === 'in_progress').length,
+    chatbot: orders.filter((order) => order.source === 'chatbot').length,
+    contactForm: orders.filter((order) => order.source === 'contact_form').length,
   }
 
+  const mediaStats = {
+    total: mediaItems.length,
+    live: mediaItems.filter((item) => !item.is_archived && item.is_published).length,
+    draft: mediaItems.filter((item) => !item.is_archived && !item.is_published).length,
+    archived: mediaItems.filter((item) => item.is_archived).length,
+    hero: mediaItems.filter((item) => item.placement === 'hero' && !item.is_archived).length,
+    gallery: mediaItems.filter((item) => item.placement === 'gallery' && !item.is_archived).length,
+  }
+
+  const recentOrders = orders.slice(0, 5)
+  const adminDraft = buildAdminNewOrderNotification(previewOrder, buildDashboardOrderLink(previewOrder.id))
+  const acknowledgementDraft = buildCustomerOrderAcknowledgementNotification(previewOrder)
+  const startedDraft = buildCustomerOrderStatusNotification(previewOrder, 'started', 'new')
+  const progressDraft = buildCustomerOrderStatusNotification(previewOrder, 'in_progress', 'started')
+  const completedDraft = buildCustomerOrderStatusNotification(previewOrder, 'completed', 'in_progress')
+  const activeViewConfig = adminViews.find((view) => view.id === activeView) || adminViews[0]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 pt-20 px-4 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 px-4 pb-12 pt-20">
       <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600 mt-1">Manage your cake orders</p>
+        <div className="mb-4 rounded-3xl border border-purple-100 bg-white/90 p-3 shadow-lg backdrop-blur-sm lg:hidden">
+          <div className="flex items-center gap-3 overflow-x-auto">
+            {adminViews.map((view) => (
+              <button
+                key={view.id}
+                onClick={() => setView(view.id)}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                  activeView === view.id
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {view.label}
+              </button>
+            ))}
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Orders</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.total}</p>
+        <div className="grid gap-6 lg:grid-cols-[240px,minmax(0,1fr)]">
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 rounded-[2rem] border border-purple-100 bg-white/90 p-4 shadow-xl backdrop-blur-sm">
+              <div className="border-b border-purple-100 px-3 pb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-purple-600">EVO Cakes</p>
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">Admin</h1>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Circle className="w-6 h-6 text-blue-600" />
+
+              <nav className="mt-4 space-y-2">
+                {adminViews.map((view) => {
+                  const Icon = view.icon
+
+                  return (
+                    <button
+                      key={view.id}
+                      onClick={() => setView(view.id)}
+                      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition-all ${
+                        activeView === view.id
+                          ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{view.label}</span>
+                    </button>
+                  )
+                })}
+              </nav>
+
+              <div className="mt-6 space-y-2 border-t border-purple-100 pt-4">
+                <button
+                  onClick={() => {
+                    void loadOrders(true)
+                    void loadMedia()
+                  }}
+                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-gray-700 transition-all hover:bg-gray-100"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-gray-700 transition-all hover:bg-gray-100"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
               </div>
             </div>
-          </motion.div>
+          </aside>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">New</p>
-                <p className="text-3xl font-bold text-orange-600">{stats.new}</p>
-              </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <Circle className="w-6 h-6 text-orange-600" />
+          <div className="space-y-6">
+            <div className="flex flex-col gap-3 rounded-[2rem] border border-purple-100 bg-white/90 p-5 shadow-xl backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-3xl font-bold text-gray-900">{activeViewConfig.label}</h2>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-500">
+                {lastUpdatedAt && (
+                  <span className="rounded-full bg-gray-100 px-3 py-1">
+                    Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+                {focusOrderId && activeView === 'orders' && (
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">
+                    Focus order pinned
+                  </span>
+                )}
               </div>
             </div>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">In Progress</p>
-                <p className="text-3xl font-bold text-purple-600">{stats.inProgress}</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <Clock3 className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Completed</p>
-                <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="mb-6 rounded-2xl border border-purple-100 bg-white/90 p-4 shadow-lg backdrop-blur-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-xl">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search by customer, email, phone, or cake details"
-                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+            {activeView === 'overview' && (
+              <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <MetricCard
+                label="Total Orders"
+                value={stats.total}
+                tone="blue"
+                icon={<Circle className="h-6 w-6 text-blue-600" />}
+              />
+              <MetricCard
+                label="Active Pipeline"
+                value={stats.active}
+                tone="purple"
+                icon={<Clock3 className="h-6 w-6 text-purple-600" />}
+              />
+              <MetricCard
+                label="Completed"
+                value={stats.completed}
+                tone="green"
+                icon={<CheckCircle2 className="h-6 w-6 text-green-600" />}
+              />
+              <MetricCard
+                label="Live Media"
+                value={mediaStats.live}
+                tone="pink"
+                icon={<ImagePlus className="h-6 w-6 text-pink-600" />}
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {(['all', 'new', 'in_progress', 'completed'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`rounded-lg px-4 py-2 font-medium transition-all ${
-                    filterStatus === status
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
-                      : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                </button>
-              ))}
-            </div>
-          </div>
+            <div className="grid gap-6 xl:grid-cols-[1.3fr,0.9fr]">
+              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Order Pipeline</h2>
+                    <p className="text-sm text-gray-600">
+                      Click a stage to jump straight into the order workflow.
+                    </p>
+                  </div>
+                  {lastUpdatedAt && (
+                    <p className="text-sm text-gray-500">
+                      Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
 
-          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              {([
-                ['all', 'All Sources'],
-                ['chatbot', 'Chatbot'],
-                ['contact_form', 'Contact Form'],
-              ] as const).map(([source, label]) => (
-                <button
-                  key={source}
-                  onClick={() => setSourceFilter(source)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                    sourceFilter === source
-                      ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {orderStatuses.map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setView('orders')
+                        setFilterStatus(status)
+                      }}
+                      className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 ${getStatusClasses(status)}`}
+                    >
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em]">
+                        {orderStatusLabels[status]}
+                      </p>
+                      <p className="mt-2 text-3xl font-bold">
+                        {status === 'new'
+                          ? stats.new
+                          : status === 'started'
+                            ? stats.started
+                            : status === 'in_progress'
+                              ? stats.inProgress
+                              : stats.completed}
+                      </p>
+                      <p className="mt-2 text-sm opacity-90">{orderStatusDescriptions[status]}</p>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Live Change Protection</h2>
+                    <p className="text-sm text-gray-600">Every publish, archive, restore, and status change now asks for confirmation.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p>Media updates in the dashboard now control live gallery and hero content through Supabase, not local files.</p>
+                  <p>Order statuses now support four stages: New, Started, In Progress, and Completed.</p>
+                  <p>Notification drafts are ready for admin alerts and customer status updates once the edge function secrets are configured.</p>
+                </div>
+              </section>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-              <span>{filteredOrders.length} showing</span>
-              <span>{stats.chatbot} chatbot</span>
-              <span>{stats.contactForm} contact form</span>
-              {lastUpdatedAt && (
-                <span>Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
+              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Recent Orders</h2>
+                    <p className="text-sm text-gray-600">Newest activity across contact form and chatbot.</p>
+                  </div>
+                  <button
+                    onClick={() => setView('orders')}
+                    className="rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-700 transition-all hover:bg-purple-200"
+                  >
+                    Open Orders
+                  </button>
+                </div>
+
+                {recentOrders.length === 0 ? (
+                  <p className="rounded-2xl bg-pink-50 px-5 py-6 text-sm text-gray-600">No orders yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentOrders.map((order) => (
+                      <button
+                        key={order.id}
+                        onClick={() => {
+                          setView('orders')
+                          setSearchParams({
+                            view: 'orders',
+                            order: order.id,
+                          })
+                        }}
+                        className="w-full rounded-2xl border border-pink-100 bg-white px-4 py-4 text-left transition-all hover:border-purple-200 hover:shadow-md"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900">{order.customer_name}</p>
+                            <p className="mt-1 text-sm text-gray-600">{order.cake_description}</p>
+                            <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gray-500">
+                              {order.source === 'chatbot' ? 'Chatbot' : 'Contact Form'}
+                            </p>
+                          </div>
+                          <div className="text-left sm:text-right">
+                            <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-medium ${getStatusClasses(order.status)}`}>
+                              {formatOrderStatus(order.status)}
+                            </span>
+                            <p className="mt-2 text-sm text-gray-500">{formatEventDate(order.event_date)}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-100 text-pink-700">
+                    <BellRing className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Notification Readiness</h2>
+                    <p className="text-sm text-gray-600">What still needs to be switched on in Supabase.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {buildNotificationConfigItems().map((item) => (
+                    <div key={item} className="rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setView('notifications')}
+                  className="mt-5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-pink-600 hover:to-purple-600"
+                >
+                  Review Notification Drafts
+                </button>
+              </section>
+            </div>
+              </div>
+            )}
+
+            {activeView === 'orders' && (
+              <div className="space-y-6">
+            <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+              <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Order Operations</h2>
+                  <p className="text-sm text-gray-600">Search, prioritize, and move orders through the workflow.</p>
+                </div>
+
+                <div className="relative w-full lg:max-w-xl">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search by customer, email, phone, or cake details"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-3 xl:grid-cols-[1fr,auto]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      filterStatus === 'all'
+                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                        : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    All Statuses
+                  </button>
+                  {orderStatuses.map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setFilterStatus(status)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        filterStatus === status
+                          ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {formatOrderStatus(status)}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setSourceFilter('all')}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      sourceFilter === 'all'
+                        ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    All Sources
+                  </button>
+                  {(Object.keys(sourceLabels) as Array<Exclude<SourceFilter, 'all'>>).map((source) => (
+                    <button
+                      key={source}
+                      onClick={() => setSourceFilter(source)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        sourceFilter === source
+                          ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {sourceLabels[source]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                <span>{filteredOrders.length} showing</span>
+                <span>{stats.chatbot} chatbot</span>
+                <span>{stats.contactForm} contact form</span>
+                {focusOrderId && (
+                  <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-700">
+                    Focus order pinned to top
+                  </span>
+                )}
+                {lastUpdatedAt && (
+                  <span>Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                )}
+              </div>
+            </section>
+
+            {isLoadingOrders ? (
+              <LoadingPanel label="Loading orders..." />
+            ) : filteredOrders.length === 0 ? (
+              <EmptyPanel
+                title="No orders match the current filters."
+                description="Try widening the search or resetting the status and source filters."
+              />
+            ) : (
+              <div className="space-y-4">
+                {filteredOrders.map((order, index) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    index={index}
+                    isFocused={order.id === focusOrderId}
+                    onStatusChange={requestStatusChange}
+                  />
+                ))}
+              </div>
+            )}
+              </div>
+            )}
+
+            {activeView === 'media' && (
+              <div className="grid gap-6 xl:grid-cols-[0.9fr,1.1fr]">
+            <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-100 text-pink-700">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {mediaForm.id ? 'Edit Website Media' : 'Add Website Media'}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Upload hero slides or gallery images that can go live without touching repo files.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <span>Placement</span>
+                    <select
+                      value={mediaForm.placement}
+                      onChange={(event) => {
+                        const nextPlacement = event.target.value as MediaPlacement
+                        setMediaForm((current) => ({
+                          ...current,
+                          placement: nextPlacement,
+                          category: nextPlacement === 'gallery' ? current.category || 'Wedding Cakes' : '',
+                        }))
+                      }}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                    >
+                      {mediaPlacementOptions.map((placement) => (
+                        <option key={placement} value={placement}>
+                          {mediaPlacementLabels[placement]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {mediaForm.placement === 'gallery' && (
+                    <label className="space-y-2 text-sm font-medium text-gray-700">
+                      <span>Category</span>
+                      <select
+                        value={mediaForm.category}
+                        onChange={(event) => setMediaForm((current) => ({ ...current, category: event.target.value as GalleryContentCategory }))}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                      >
+                        {galleryContentCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <span>Title</span>
+                    <input
+                      type="text"
+                      value={mediaForm.title}
+                      onChange={(event) => setMediaForm((current) => ({ ...current, title: event.target.value }))}
+                      placeholder="Optional title for admin and hero copy"
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                    />
+                  </label>
+
+                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <span>Sort Order</span>
+                    <input
+                      type="number"
+                      value={mediaForm.sort_order}
+                      onChange={(event) => setMediaForm((current) => ({ ...current, sort_order: event.target.value }))}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                    />
+                  </label>
+                </div>
+
+                <label className="space-y-2 text-sm font-medium text-gray-700">
+                  <span>Description / Subtitle</span>
+                  <textarea
+                    rows={3}
+                    value={mediaForm.description}
+                    onChange={(event) => setMediaForm((current) => ({ ...current, description: event.target.value }))}
+                    placeholder="Hero slides use this as the subtitle. Gallery items can use it as internal context."
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm font-medium text-gray-700">
+                  <span>Alt Text</span>
+                  <input
+                    type="text"
+                    value={mediaForm.alt_text}
+                    onChange={(event) => setMediaForm((current) => ({ ...current, alt_text: event.target.value }))}
+                    placeholder="Describe the image for accessibility"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                  />
+                </label>
+
+                <label className="space-y-3 rounded-2xl border border-dashed border-purple-200 bg-purple-50/60 p-4 text-sm font-medium text-gray-700">
+                  <span className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-purple-600" />
+                    {mediaForm.id ? 'Replace image file (optional)' : 'Upload image file'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(event) => setMediaFile(event.target.files?.[0] || null)}
+                    className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:font-semibold file:text-purple-700 hover:file:bg-purple-100"
+                  />
+                  <p className="text-xs text-gray-500">
+                    {mediaFile ? `Selected: ${mediaFile.name}` : mediaForm.id ? 'Leave empty to keep the current image file.' : 'PNG, JPG, or WEBP up to 10MB.'}
+                  </p>
+                </label>
+
+                <label className="flex items-center gap-3 rounded-2xl border border-pink-100 bg-pink-50/70 px-4 py-3 text-sm font-medium text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={mediaForm.is_published}
+                    onChange={(event) => setMediaForm((current) => ({ ...current, is_published: event.target.checked }))}
+                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  Publish immediately after saving
+                </label>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={handleMediaSubmit}
+                    disabled={isSavingMedia}
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-pink-600 hover:to-purple-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {mediaForm.id ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    {mediaForm.id ? 'Save Changes' : 'Upload Media'}
+                  </button>
+
+                  {mediaForm.id && (
+                    <button
+                      onClick={resetMediaForm}
+                      className="rounded-full border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+              <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Media Library</h2>
+                  <p className="text-sm text-gray-600">Post, edit, arrange, hide, archive, restore, and delete website images from one panel.</p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <MetricPill label="Live" value={mediaStats.live} />
+                  <MetricPill label="Draft" value={mediaStats.draft} />
+                  <MetricPill label="Archived" value={mediaStats.archived} />
+                </div>
+              </div>
+
+              {mediaSetupMessage && (
+                <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                  {mediaSetupMessage}
+                </div>
               )}
+
+              <div className="mb-5 space-y-4">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={mediaSearchQuery}
+                    onChange={(event) => setMediaSearchQuery(event.target.value)}
+                    placeholder="Search by title, description, category, or placement"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(['all', ...mediaPlacementOptions] as const).map((placement) => (
+                    <button
+                      key={placement}
+                      onClick={() => setMediaPlacementFilter(placement)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        mediaPlacementFilter === placement
+                          ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {placement === 'all' ? 'All Placements' : mediaPlacementLabels[placement]}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(['all', 'live', 'draft', 'archived'] as const).map((stateValue) => (
+                    <button
+                      key={stateValue}
+                      onClick={() => setMediaStateFilter(stateValue)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        mediaStateFilter === stateValue
+                          ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {stateValue === 'all'
+                        ? 'All States'
+                        : stateValue.charAt(0).toUpperCase() + stateValue.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isLoadingMedia ? (
+                <LoadingPanel label="Loading media..." />
+              ) : filteredMedia.length === 0 ? (
+                <EmptyPanel
+                  title="No website media matches the current filters."
+                  description="Upload a new hero or gallery image, or widen the library filters."
+                />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {filteredMedia.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`overflow-hidden rounded-3xl border bg-white shadow-md transition-all ${
+                        item.is_archived ? 'border-gray-200 opacity-80' : 'border-purple-100'
+                      }`}
+                    >
+                      <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                        <img
+                          src={item.public_url}
+                          alt={item.alt_text || item.title || 'Website media preview'}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+
+                      <div className="space-y-4 p-5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+                            {mediaPlacementLabels[item.placement]}
+                          </span>
+                          {item.category && (
+                            <span className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-700">
+                              {item.category}
+                            </span>
+                          )}
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            item.is_archived
+                              ? 'bg-gray-200 text-gray-700'
+                              : item.is_published
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {item.is_archived ? 'Archived' : item.is_published ? 'Live' : 'Draft'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">{item.title || 'Untitled image'}</p>
+                          <p className="mt-1 text-sm text-gray-600">
+                            {item.description || 'No description added yet.'}
+                          </p>
+                        </div>
+
+                        <div className="grid gap-2 text-sm text-gray-600 sm:grid-cols-2">
+                          <p><span className="font-semibold text-gray-800">Sort:</span> {item.sort_order}</p>
+                          <p><span className="font-semibold text-gray-800">Updated:</span> {formatEventDate(item.updated_at)}</p>
+                        </div>
+
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Arrange</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => requestMoveMedia(item, 'up')}
+                              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                              Move Up
+                            </button>
+                            <button
+                              onClick={() => requestMoveMedia(item, 'down')}
+                              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                              Move Down
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              setMediaForm(buildMediaFormState(item))
+                              setMediaFile(null)
+                            }}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </button>
+
+                          {item.is_archived ? (
+                            <>
+                              <button
+                                onClick={() => requestRestoreMedia(item)}
+                                className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-700 transition-all hover:bg-emerald-200"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                                Restore
+                              </button>
+                              <button
+                                onClick={() => requestDeleteMedia(item)}
+                                className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition-all hover:bg-red-200"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => requestToggleMediaVisibility(item, !item.is_published)}
+                                className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-700 transition-all hover:bg-purple-200"
+                              >
+                                {item.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                {item.is_published ? 'Hide' : 'Publish'}
+                              </button>
+                              <button
+                                onClick={() => requestArchiveMedia(item)}
+                                className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition-all hover:bg-red-200"
+                              >
+                                <Archive className="h-4 w-4" />
+                                Archive
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+              </div>
+            )}
+
+            {activeView === 'notifications' && (
+              <div className="space-y-6">
+            <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-700">
+                  <BellRing className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Professional Notification Drafts</h2>
+                  <p className="text-sm text-gray-600">These are the templates the system is prepared to send.</p>
+                </div>
+              </div>
+
+              <div className="grid gap-6 xl:grid-cols-2">
+                <NotificationCard
+                  title="Admin New Order Alert"
+                  subject={adminDraft.subject}
+                  content={adminDraft.text}
+                  asideLabel="Admin SMS"
+                  asideContent={adminDraft.sms}
+                />
+                <NotificationCard
+                  title="Customer Receipt Confirmation"
+                  subject={acknowledgementDraft.subject}
+                  content={acknowledgementDraft.text}
+                />
+                <NotificationCard
+                  title="Customer Update: Started"
+                  subject={startedDraft.subject}
+                  content={startedDraft.text}
+                />
+                <NotificationCard
+                  title="Customer Update: In Progress"
+                  subject={progressDraft.subject}
+                  content={progressDraft.text}
+                />
+                <NotificationCard
+                  title="Customer Update: Completed"
+                  subject={completedDraft.subject}
+                  content={completedDraft.text}
+                />
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+              <h2 className="text-2xl font-bold text-gray-900">Operational Notes</h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl bg-pink-50 px-5 py-4 text-sm text-gray-700">
+                  New orders can notify the admin by email and SMS with a direct dashboard link to the order queue.
+                </div>
+                <div className="rounded-2xl bg-purple-50 px-5 py-4 text-sm text-gray-700">
+                  Customers can now receive an acknowledgement email as soon as an order is submitted through the chatbot or contact form.
+                </div>
+                <div className="rounded-2xl bg-blue-50 px-5 py-4 text-sm text-gray-700">
+                  Status changes only move forward one step at a time so customers do not receive confusing workflow emails out of order.
+                </div>
+                <div className="rounded-2xl bg-emerald-50 px-5 py-4 text-sm text-gray-700">
+                  The dashboard link supports <code>?view=orders&amp;order=&lt;id&gt;</code> so admin alerts can deep-link directly into the queue.
+                </div>
+              </div>
+            </section>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {confirmationState && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-3xl border border-purple-100 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                confirmationState.tone === 'danger' ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'
+              }`}>
+                {confirmationState.tone === 'danger' ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : (
+                  <ShieldCheck className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{confirmationState.title}</h3>
+                <p className="text-sm text-gray-600">Please confirm this live action.</p>
+              </div>
+            </div>
+
+            <p className="text-sm leading-6 text-gray-700">{confirmationState.message}</p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
               <button
-                onClick={() => void loadOrders(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 font-medium text-gray-700 transition-all hover:bg-gray-50"
+                onClick={handleConfirmAction}
+                disabled={isConfirmingAction}
+                className={`rounded-full px-5 py-3 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                  confirmationState.tone === 'danger'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600'
+                }`}
               >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Refresh
+                {isConfirmingAction ? 'Saving...' : confirmationState.actionLabel}
+              </button>
+              <button
+                onClick={() => setConfirmationState(null)}
+                disabled={isConfirmingAction}
+                className="rounded-full border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
               </button>
             </div>
           </div>
         </div>
-
-        {/* Orders List */}
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-600 mt-4">Loading orders...</p>
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-12 bg-white/90 backdrop-blur-sm rounded-2xl">
-            <p className="text-gray-500">No orders found</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order, index) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                index={index}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
 
-// Order Card Component
+function MetricCard({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string
+  value: number
+  tone: 'blue' | 'purple' | 'green' | 'pink'
+  icon: ReactNode
+}) {
+  const toneClasses = {
+    blue: 'bg-blue-100',
+    purple: 'bg-purple-100',
+    green: 'bg-green-100',
+    pink: 'bg-pink-100',
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+        </div>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-full ${toneClasses[tone]}`}>
+          {icon}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function MetricPill({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-pink-100 bg-pink-50/70 px-4 py-3 text-center">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pink-600">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  )
+}
+
+function LoadingPanel({ label }: { label: string }) {
+  return (
+    <div className="rounded-3xl border border-purple-100 bg-white/90 py-16 text-center shadow-xl backdrop-blur-sm">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+      <p className="mt-4 text-gray-600">{label}</p>
+    </div>
+  )
+}
+
+function EmptyPanel({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-3xl border border-purple-100 bg-white/90 px-6 py-16 text-center shadow-xl backdrop-blur-sm">
+      <p className="text-lg font-semibold text-gray-900">{title}</p>
+      <p className="mt-2 text-sm text-gray-600">{description}</p>
+    </div>
+  )
+}
+
+function NotificationCard({
+  title,
+  subject,
+  content,
+  asideLabel,
+  asideContent,
+}: {
+  title: string
+  subject: string
+  content: string
+  asideLabel?: string
+  asideContent?: string
+}) {
+  return (
+    <div className="rounded-3xl border border-purple-100 bg-white p-5 shadow-md">
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-purple-600">{title}</p>
+      <p className="mt-3 text-base font-semibold text-gray-900">{subject}</p>
+      <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-gray-50 p-4 text-sm leading-6 text-gray-700">
+        {content}
+      </pre>
+      {asideLabel && asideContent && (
+        <div className="mt-4 rounded-2xl bg-pink-50 p-4 text-sm text-gray-700">
+          <p className="font-semibold text-pink-700">{asideLabel}</p>
+          <p className="mt-2">{asideContent}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function OrderCard({
   order,
   index,
-  onStatusChange
+  isFocused,
+  onStatusChange,
 }: {
-  order: Order
+  order: ResolvedOrder
   index: number
-  onStatusChange: (orderId: string, status: 'new' | 'in_progress' | 'completed') => void
+  isFocused: boolean
+  onStatusChange: (order: ResolvedOrder, status: OrderStatus) => void
 }) {
   const [showImages, setShowImages] = useState(false)
-
-  const statusColors = {
-    new: 'bg-orange-100 text-orange-700 border-orange-200',
-    in_progress: 'bg-purple-100 text-purple-700 border-purple-200',
-    completed: 'bg-green-100 text-green-700 border-green-200',
-  }
   const sourceLabel = order.source === 'chatbot' ? 'Chatbot' : 'Contact Form'
   const sourceClasses =
     order.source === 'chatbot'
-      ? 'bg-purple-100 text-purple-700 border-purple-200'
-      : 'bg-sky-100 text-sky-700 border-sky-200'
+      ? 'border-purple-200 bg-purple-100 text-purple-700'
+      : 'border-sky-200 bg-sky-100 text-sky-700'
+  const nextStatus = getNextOrderStatus(order.status)
 
   const orderSummaryParts = [
     order.event_type ? `${order.event_type} cake` : 'Cake order',
-    order.event_date ? `for ${new Date(order.event_date).toLocaleDateString()}` : null,
+    order.event_date ? `for ${formatEventDate(order.event_date)}` : null,
     order.serving_size ? `serving ${order.serving_size}` : null,
     order.cake_description ? `details: ${order.cake_description}` : null,
     order.dietary_restrictions ? `dietary: ${order.dietary_restrictions}` : null,
   ].filter(Boolean)
 
-  const orderSummary = orderSummaryParts.join(', ')
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg"
+      transition={{ delay: index * 0.03 }}
+      className={`rounded-3xl border bg-white/90 p-6 shadow-xl backdrop-blur-sm ${
+        isFocused ? 'border-amber-300 ring-2 ring-amber-200' : 'border-purple-100'
+      }`}
     >
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left: Customer Info */}
+      <div className="grid gap-6 xl:grid-cols-[0.95fr,1.1fr,0.95fr]">
         <div className="space-y-4">
-          <div>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-3 py-1 text-sm font-medium ${statusColors[order.status]}`}>
-                  {order.status.replace('_', ' ')}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border px-3 py-1 text-sm font-medium ${getStatusClasses(order.status)}`}>
+                {formatOrderStatus(order.status)}
+              </span>
+              <span className={`rounded-full border px-3 py-1 text-sm font-medium ${sourceClasses}`}>
+                {sourceLabel}
+              </span>
+              {isFocused && (
+                <span className="rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700">
+                  Linked from alert
                 </span>
-                <span className={`rounded-full border px-3 py-1 text-sm font-medium ${sourceClasses}`}>
-                  {sourceLabel}
-                </span>
-              </div>
-              <div className="text-right text-xs text-gray-500">
-                <p>{new Date(order.created_at).toLocaleDateString()}</p>
-                <p>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-              </div>
+              )}
             </div>
+            <div className="text-right text-xs text-gray-500">
+              <p>{formatEventDate(order.created_at)}</p>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-2 text-gray-800 mb-2">
-              <User className="w-4 h-4 text-purple-600" />
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-gray-900">
+              <User className="h-4 w-4 text-purple-600" />
               <span className="font-semibold">{order.customer_name}</span>
             </div>
-
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
-              <Mail className="w-4 h-4 text-purple-600" />
-              <a href={`mailto:${order.customer_email}`} className="hover:text-purple-600">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Mail className="h-4 w-4 text-purple-600" />
+              <a href={`mailto:${order.customer_email}`} className="transition-colors hover:text-purple-600">
                 {order.customer_email}
               </a>
             </div>
-
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
-              <Phone className="w-4 h-4 text-purple-600" />
-              <a href={`tel:${order.customer_phone}`} className="hover:text-purple-600 font-semibold">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Phone className="h-4 w-4 text-purple-600" />
+              <a href={`tel:${order.customer_phone}`} className="font-semibold transition-colors hover:text-purple-600">
                 {order.customer_phone}
               </a>
             </div>
-
             {order.event_type && (
-              <div className="flex items-center gap-2 text-gray-600 mb-2">
-                <Calendar className="w-4 h-4 text-purple-600" />
-                <span>{order.event_type}</span>
-                {order.event_date && (
-                  <span className="text-sm">({new Date(order.event_date).toLocaleDateString()})</span>
-                )}
+              <div className="flex items-center gap-2 text-gray-600">
+                <Calendar className="h-4 w-4 text-purple-600" />
+                <span>
+                  {order.event_type}
+                  {order.event_date ? ` (${formatEventDate(order.event_date)})` : ''}
+                </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Middle: Order Details */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-600">Order Summary</label>
-            <p className="mt-1 text-gray-800 leading-6">{orderSummary}</p>
+            <p className="mt-1 leading-6 text-gray-800">{orderSummaryParts.join(', ')}</p>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
+              <MessageSquare className="h-4 w-4" />
               Cake Description
             </label>
-            <p className="text-gray-800 mt-1">{order.cake_description}</p>
+            <p className="mt-1 text-gray-800">{order.cake_description}</p>
           </div>
 
           {order.design_preferences && order.design_preferences !== order.cake_description && (
             <div>
               <label className="text-sm font-medium text-gray-600">Design Notes</label>
-              <p className="text-gray-800">{order.design_preferences}</p>
-            </div>
-          )}
-
-          {order.dietary_restrictions && (
-            <div>
-              <label className="text-sm font-medium text-gray-600">Dietary Restrictions</label>
-              <p className="text-gray-800">{order.dietary_restrictions}</p>
-            </div>
-          )}
-
-          {order.serving_size && (
-            <div>
-              <label className="text-sm font-medium text-gray-600">Serving Size</label>
-              <p className="text-gray-800">{order.serving_size}</p>
+              <p className="mt-1 text-gray-800">{order.design_preferences}</p>
             </div>
           )}
 
           {order.order_images.length > 0 && (
             <button
-              onClick={() => setShowImages(!showImages)}
-              className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+              onClick={() => setShowImages((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-700 transition-all hover:bg-purple-200"
             >
-              <ImageIcon className="w-4 h-4" />
-              {order.order_images.length} Image{order.order_images.length > 1 ? 's' : ''}
+              <ImageIcon className="h-4 w-4" />
+              {showImages ? 'Hide' : 'Show'} {order.order_images.length} reference image{order.order_images.length > 1 ? 's' : ''}
             </button>
           )}
         </div>
 
-        {/* Right: Status Management */}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-600">Update Status</label>
-          <div className="space-y-2">
-            {(['new', 'in_progress', 'completed'] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => onStatusChange(order.id, status)}
-                disabled={order.status === status}
-                className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
-                  order.status === status
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white cursor-default'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-              </button>
-            ))}
+          <label className="text-sm font-medium text-gray-600">Workflow</label>
+          <div className={`rounded-2xl border px-4 py-4 ${getStatusClasses(order.status)}`}>
+            <span className="block text-xs font-semibold uppercase tracking-[0.18em]">Current Stage</span>
+            <span className="mt-2 block text-lg font-semibold">{formatOrderStatus(order.status)}</span>
+            <span className="mt-1 block text-sm opacity-90">{orderStatusDescriptions[order.status]}</span>
           </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {orderStatuses.map((status) => {
+              const isCurrent = status === order.status
+              const isUpcoming = status === nextStatus
+
+              return (
+                <div
+                  key={status}
+                  className={`rounded-2xl border px-3 py-2 text-center text-sm font-medium ${
+                    isCurrent
+                      ? 'border-purple-200 bg-purple-100 text-purple-700'
+                      : isUpcoming
+                        ? 'border-pink-200 bg-pink-50 text-pink-700'
+                        : 'border-gray-200 bg-gray-50 text-gray-500'
+                  }`}
+                >
+                  {formatOrderStatus(status)}
+                </div>
+              )
+            })}
+          </div>
+
+          {nextStatus ? (
+            <button
+              onClick={() => onStatusChange(order, nextStatus)}
+              className="w-full rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-3 text-left text-white shadow-lg transition-all hover:from-pink-600 hover:to-purple-600"
+            >
+              <span className="block font-semibold">Mark as {formatOrderStatus(nextStatus)}</span>
+              <span className="mt-1 block text-xs text-white/85">
+                This is the next allowed step and sends the matching customer update when notifications are active.
+              </span>
+            </button>
+          ) : (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              This order is complete. No further workflow emails will be sent.
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Image Gallery */}
       {showImages && order.order_images.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mt-6 border-t border-gray-200 pt-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {order.order_images.map((image) => (
               <a
                 key={image.id}
                 href={image.preview_url || image.image_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all"
+                className="group relative aspect-square overflow-hidden rounded-2xl border-2 border-gray-200 transition-all hover:border-purple-400"
               >
                 <img
                   src={image.preview_url || image.image_url}
                   alt={image.file_name || 'Order image'}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
               </a>
             ))}
           </div>

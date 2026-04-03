@@ -208,7 +208,7 @@ Visit **http://localhost:3000** and you'll see:
 │  EVO Cakes          Quick Links        Contact       │
 │  🎂 [Logo]          • Home              📞 +1-555     │
 │  "Crafting..."      • About Us          📧 email     │
-│  [Hover: scale]     • Our Cakes         📍 address   │
+│  [Hover: scale]     • FAQ               📍 address   │
 │                     • Gallery                        │
 │                     [Hover: slide x+5]               │
 │                                                       │

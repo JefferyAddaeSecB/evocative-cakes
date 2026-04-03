@@ -195,7 +195,7 @@ export default function PrivacyPage() {
                   If you have questions or concerns about this Privacy Policy or our data practices, please contact us:
                 </p>
                 <div className="text-gray-700 space-y-1">
-                  <p><strong>Email:</strong> privacy@evocakes.com</p>
+                  <p><strong>Email:</strong> evocativecakes@gmail.com</p>
                   <p><strong>Phone:</strong> 416-910-1439</p>
                   <p><strong>Location:</strong> Brampton, Ontario, Canada</p>
                 </div>

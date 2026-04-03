@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Phone, Mail, MapPin, Clock } from "lucide-react"
+import { Phone, Mail, MapPin } from "lucide-react"
 
 export default function Contact() {
   return (
@@ -37,48 +37,64 @@ export default function Contact() {
               </h2>
               <form className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name*</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address*</label>
+                    <input
+                      type="email"
+                      className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number*</label>
                   <input
-                    type="text"
-                    placeholder="Full Name*"
-                    className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
-                    required
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email Address*"
+                    type="tel"
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                     required
                   />
                 </div>
 
-                <input
-                  type="tel"
-                  placeholder="Phone Number*"
-                  className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
-                  required
-                />
-
-                <select
-                  className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
-                  required
-                >
-                  <option>Cake Type*</option>
-                  <option>Birthday</option>
-                  <option>Wedding</option>
-                  <option>Anniversary</option>
-                  <option>Corporate</option>
-                  <option>Other</option>
-                </select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Event Type*</label>
+                  <select
+                    className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                    required
+                  >
+                    <option value="">Select an event type</option>
+                    <option>Birthday</option>
+                    <option>Wedding</option>
+                    <option>Anniversary</option>
+                    <option>Corporate</option>
+                    <option>Other</option>
+                  </select>
+                </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <input
-                    type="date"
-                    className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
-                  />
-                  <input
-                    type="time"
-                    className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Event*</label>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Time (Optional)</label>
+                    <input
+                      type="time"
+                      className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
+                    />
+                  </div>
                 </div>
 
                 <textarea
@@ -114,7 +130,7 @@ export default function Contact() {
                   </div>
                   <div className="flex items-center gap-3 text-gray-600">
                     <Mail className="w-5 h-5 text-purple-500" />
-                    hello@evocakes.com
+                    evocativecakes@gmail.com
                   </div>
                   <div className="flex items-center gap-3 text-gray-600">
                     <MapPin className="w-5 h-5 text-purple-500" />

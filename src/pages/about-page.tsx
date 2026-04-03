@@ -12,11 +12,11 @@ const stats = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-16 md:pt-20">
       {/* SECTION 1 - Hero (2-column) */}
-      <section className="py-20 px-4">
+      <section className="px-4 pb-8 pt-8 sm:pt-10 md:py-20">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
             {/* Left Column */}
             <div>
               <motion.div
@@ -24,9 +24,9 @@ export default function AboutPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <div className="flex items-center space-x-2 mb-6">
-                  <Sparkles className="w-6 h-6 text-yellow-500" />
-                  <span className="text-lg font-medium text-purple-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-200">
+                <div className="mb-4 flex items-center space-x-2 md:mb-6">
+                  <Sparkles className="h-5 w-5 text-yellow-500 md:h-6 md:w-6" />
+                  <span className="rounded-full border border-purple-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-purple-600 backdrop-blur-sm md:px-4 md:py-2 md:text-lg">
                     Our Story
                   </span>
                 </div>
@@ -36,7 +36,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mt-4 mb-6"
+                className="mt-2 mb-4 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent sm:text-5xl md:mt-4 md:mb-6 md:text-6xl"
               >
                 About EVO Cakes
               </motion.h1>
@@ -45,7 +45,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-gray-600 text-lg leading-relaxed mb-4"
+                className="mb-4 text-base leading-relaxed text-gray-600 sm:text-lg"
               >
                 Founded in 2020 with a passion for creating extraordinary cakes, EVO Cakes has become
                 the premier destination for custom wedding and birthday cakes in the city.
@@ -55,7 +55,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-gray-600 text-lg leading-relaxed"
+                className="text-base leading-relaxed text-gray-600 sm:text-lg"
               >
                 Our team of skilled bakers and decorators combines traditional techniques with modern artistry
                 to create cakes that are not just delicious, but true works of art. Every cake tells a story,
@@ -71,17 +71,17 @@ export default function AboutPage() {
               className="relative"
             >
               <img
-                src="/images/gallery/Wedding-Cakes/main%201.jpg"
+                src="/images/gallery/Wedding-Cakes/20250503_085520.jpg"
                 alt="Signature EVO Cakes wedding design"
-                className="rounded-3xl shadow-2xl w-full h-[500px] object-cover"
+                className="h-[340px] w-full rounded-3xl object-cover shadow-2xl sm:h-[500px]"
               />
               {/* Floating heart badge */}
               <motion.div
-                className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full flex items-center justify-center shadow-2xl"
+                className="absolute -right-3 -top-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-pink-400 to-rose-400 shadow-2xl sm:-right-6 sm:-top-6 sm:h-24 sm:w-24"
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <Heart className="w-10 h-10 text-white fill-white" />
+                <Heart className="h-7 w-7 fill-white text-white sm:h-10 sm:w-10" />
               </motion.div>
             </motion.div>
           </div>
@@ -89,9 +89,9 @@ export default function AboutPage() {
       </section>
 
       {/* SECTION 2 - Stats Grid */}
-      <section className="py-16 px-4 bg-white/30 backdrop-blur-sm">
+      <section className="bg-white/30 px-4 py-10 backdrop-blur-sm md:py-16">
         <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {stats.map((stat, index) => (
               <StatCard key={index} {...stat} index={index} />
             ))}
@@ -100,16 +100,16 @@ export default function AboutPage() {
       </section>
 
       {/* SECTION 3 - Mission */}
-      <section className="py-20 px-4 text-center">
+      <section className="px-4 py-12 text-center md:py-20">
         <div className="container mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Sparkles className="w-6 h-6 text-yellow-500" />
-              <span className="text-lg font-medium text-purple-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-200">
+            <div className="mb-4 flex items-center justify-center space-x-2 md:mb-6">
+              <Sparkles className="h-5 w-5 text-yellow-500 md:h-6 md:w-6" />
+              <span className="rounded-full border border-purple-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-purple-600 backdrop-blur-sm md:px-4 md:py-2 md:text-lg">
                 Our Mission
               </span>
             </div>
@@ -120,7 +120,7 @@ export default function AboutPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-5xl font-bold text-gray-800 mt-4 mb-6"
+            className="mt-2 mb-4 text-3xl font-bold text-gray-800 sm:text-4xl md:mt-4 md:mb-6 md:text-5xl"
           >
             Creating Sweet Memories
           </motion.h2>
@@ -130,7 +130,7 @@ export default function AboutPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-600 max-w-3xl mx-auto mb-10"
+            className="mx-auto mb-8 max-w-3xl text-base text-gray-600 sm:text-lg md:mb-10 md:text-xl"
           >
             To create exceptional cakes that exceed expectations and make every celebration memorable.
             We believe that every cake should be as unique as the person celebrating, crafted with
@@ -144,7 +144,7 @@ export default function AboutPage() {
             transition={{ delay: 0.3 }}
           >
             <Link to="/contact">
-              <button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-10 py-4 rounded-full font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 text-lg">
+              <button className="rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-8 py-3 text-base font-semibold text-white shadow-xl transition-all duration-300 hover:from-pink-600 hover:to-purple-600 hover:shadow-2xl md:px-10 md:py-4 md:text-lg">
                 Start Your Order →
               </button>
             </Link>

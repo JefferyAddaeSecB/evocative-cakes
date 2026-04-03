@@ -23,7 +23,7 @@
 ### Pages (src/pages/)
 - [x] `src/pages/home-page.tsx` - Landing page
 - [x] `src/pages/about-page.tsx` - About page
-- [x] `src/pages/cakes-page.tsx` - Cakes catalog
+- [x] `src/pages/faq-page.tsx` - Frequently asked questions
 - [x] `src/pages/gallery-page.tsx` - Gallery
 - [x] `src/pages/contact-page.tsx` - Contact form
 
@@ -146,7 +146,7 @@ evo-cakes-nextjs/
 │   ├── pages/ ✅
 │   │   ├── home-page.tsx ✅
 │   │   ├── about-page.tsx ✅
-│   │   ├── cakes-page.tsx ✅
+│   │   ├── faq-page.tsx ✅
 │   │   ├── gallery-page.tsx ✅
 │   │   └── contact-page.tsx ✅
 │   ├── components/ ✅

@@ -2,22 +2,20 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NavLink, Link } from 'react-router-dom'
 import { CakeSlice, Menu, X, ArrowRight, Sparkles } from 'lucide-react'
-import useScrollPosition from '@/hooks/useScrollPosition'
 
 const navLinks = [
   { label: 'Home', path: '/' },
   { label: 'About Us', path: '/about' },
-  { label: 'Cakes', path: '/cakes' },
   { label: 'Gallery', path: '/gallery' },
-  { label: 'FAQ', path: '/faq' },
   { label: 'Contact Us', path: '/contact' },
+  { label: 'FAQ', path: '/faq' },
 ]
 
 const NavMotion = motion.nav
 const DivMotion = motion.div
 const ButtonMotion = motion.button
+
 export default function Navbar() {
-  const scrolled = useScrollPosition()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
@@ -25,11 +23,7 @@ export default function Navbar() {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? 'bg-white/80 backdrop-blur-sm shadow-sm'
-          : 'bg-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-purple-200 shadow-sm"
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -42,11 +36,11 @@ export default function Navbar() {
             >
               <CakeSlice className="w-4 h-4 text-white" />
             </DivMotion>
-            <span className="text-lg font-black leading-none tracking-tight md:font-bold">
-              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent md:bg-none md:text-gray-800">
-                EVO
+            <span className="text-lg font-bold leading-none tracking-tight">
+              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Evocative
               </span>{' '}
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent md:bg-none md:text-gray-800">
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Cakes
               </span>
             </span>
@@ -66,7 +60,7 @@ export default function Navbar() {
                 <NavLink
                   to={link.path}
                   className={({ isActive }) =>
-                    `text-sm font-medium transition-all duration-300 hover:text-purple-600 relative group ${
+                    `text-sm font-medium transition-all duration-300 hover:text-purple-600 relative group no-underline ${
                       isActive ? 'text-purple-600' : 'text-gray-600'
                     }`
                   }
