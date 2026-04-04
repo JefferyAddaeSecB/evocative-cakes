@@ -1377,12 +1377,28 @@ export default function AdminDashboard() {
                         item.is_archived ? 'border-gray-200 opacity-80' : 'border-purple-100'
                       }`}
                     >
-                      <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50">
                         <img
                           src={item.public_url}
                           alt={item.alt_text || item.title || 'Website media preview'}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            target.parentElement!.innerHTML += `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;"><svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#c084fc' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21,15 16,10 5,21'/></svg><p style='font-size:12px;color:#a78bfa;'>Image unavailable</p></div>`
+                          }}
                         />
+                        <div className="absolute right-2 top-2">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${
+                            item.is_archived
+                              ? 'bg-gray-700/80 text-white'
+                              : item.is_published
+                                ? 'bg-emerald-500/90 text-white'
+                                : 'bg-amber-400/90 text-white'
+                          }`}>
+                            {item.is_archived ? 'Archived' : item.is_published ? '● Live' : '○ Draft'}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="space-y-4 p-5">
@@ -1395,15 +1411,6 @@ export default function AdminDashboard() {
                               {item.category}
                             </span>
                           )}
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            item.is_archived
-                              ? 'bg-gray-200 text-gray-700'
-                              : item.is_published
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {item.is_archived ? 'Archived' : item.is_published ? 'Live' : 'Draft'}
-                          </span>
                         </div>
 
                         <div>

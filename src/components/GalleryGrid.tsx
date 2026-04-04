@@ -66,7 +66,6 @@ const galleryFileMap: Record<GalleryContentCategory, string[]> = {
     'IMG-20181007-WA0002.jpg',
   ],
   Cupcakes: [
-    '20170806_141555.jpg',
     '20180117_151219.jpg',
     '20180117_152032.jpg',
     '20180117_154532.jpg',
