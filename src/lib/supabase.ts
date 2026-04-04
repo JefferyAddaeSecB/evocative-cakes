@@ -769,7 +769,12 @@ export async function moveWebsiteMedia(mediaId: string, direction: 'up' | 'down'
     throw siblingMediaError
   }
 
-  const orderedMedia = [...(siblingMedia || [])]
+  // Sort deterministically: sort_order ASC, then created_at DESC for ties
+  const orderedMedia = [...(siblingMedia || [])].sort((a, b) => {
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+
   const currentIndex = orderedMedia.findIndex((item) => item.id === mediaId)
 
   if (currentIndex === -1) {

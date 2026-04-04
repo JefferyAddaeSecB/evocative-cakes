@@ -60,7 +60,7 @@ export default function Navbar() {
                 <NavLink
                   to={link.path}
                   className={({ isActive }) =>
-                    `text-sm font-medium transition-all duration-300 hover:text-purple-600 relative group no-underline ${
+                    `text-base font-semibold transition-all duration-300 hover:text-purple-600 relative group no-underline ${
                       isActive ? 'text-purple-600' : 'text-gray-600'
                     }`
                   }

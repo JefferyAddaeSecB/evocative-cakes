@@ -584,47 +584,59 @@ export default function AdminDashboard() {
     })
   }
 
-  const requestMoveMedia = (item: WebsiteMediaItem, direction: 'up' | 'down') => {
-    const siblingItems = mediaItems.filter(
-      (mediaItem) =>
-        mediaItem.placement === item.placement &&
-        mediaItem.is_archived === item.is_archived
-    )
+  const requestMoveMedia = async (item: WebsiteMediaItem, direction: 'up' | 'down') => {
+    // Build the ordered list of siblings as currently displayed
+    const siblingItems = [...mediaItems]
+      .filter(
+        (mediaItem) =>
+          mediaItem.placement === item.placement &&
+          mediaItem.is_archived === item.is_archived
+      )
+      .sort((a, b) => {
+        if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+
     const currentIndex = siblingItems.findIndex((mediaItem) => mediaItem.id === item.id)
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
 
     if (currentIndex === -1) {
-      toast.error('Unable to locate this image in the current library order.')
+      toast.error('Unable to locate this image in the current order.')
       return
     }
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
 
     if (targetIndex < 0 || targetIndex >= siblingItems.length) {
       toast.error(
         direction === 'up'
-          ? 'This image is already at the top of its section.'
-          : 'This image is already at the bottom of its section.'
+          ? 'Already at the top of this section.'
+          : 'Already at the bottom of this section.'
       )
       return
     }
 
-    queueConfirmation({
-      title: direction === 'up' ? 'Move image up?' : 'Move image down?',
-      message:
-        'This changes the display order used by the live website and the admin media library.',
-      actionLabel: direction === 'up' ? 'Move up' : 'Move down',
-      tone: 'default',
-      onConfirm: async () => {
-        try {
-          await moveWebsiteMedia(item.id, direction)
-          toast.success('Image order updated')
-          await loadMedia()
-        } catch (error) {
-          console.error('Error moving media:', error)
-          const msg = error instanceof Error ? error.message : String(error)
-          toast.error('Failed to update image order', { description: msg })
-        }
-      },
-    })
+    // Optimistic update — reorder locally so UI responds instantly
+    const reordered = [...siblingItems]
+    const [moved] = reordered.splice(currentIndex, 1)
+    reordered.splice(targetIndex, 0, moved)
+
+    const updatedSortOrders = new Map(reordered.map((m, i) => [m.id, i]))
+    setMediaItems((prev) =>
+      prev.map((m) =>
+        updatedSortOrders.has(m.id) ? { ...m, sort_order: updatedSortOrders.get(m.id)! } : m
+      )
+    )
+
+    try {
+      await moveWebsiteMedia(item.id, direction)
+      await loadMedia()
+    } catch (error) {
+      console.error('Error moving media:', error)
+      // Revert the optimistic update on failure
+      await loadMedia()
+      const msg = error instanceof Error ? error.message : String(error)
+      toast.error('Failed to update image order', { description: msg })
+    }
   }
 
   const requestDeleteMedia = (item: WebsiteMediaItem) => {
@@ -830,176 +842,155 @@ export default function AdminDashboard() {
             </div>
 
             {activeView === 'overview' && (
-              <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <MetricCard
-                label="Total Orders"
-                value={stats.total}
-                tone="blue"
-                icon={<Circle className="h-6 w-6 text-blue-600" />}
-              />
-              <MetricCard
-                label="Active Pipeline"
-                value={stats.active}
-                tone="purple"
-                icon={<Clock3 className="h-6 w-6 text-purple-600" />}
-              />
-              <MetricCard
-                label="Completed"
-                value={stats.completed}
-                tone="green"
-                icon={<CheckCircle2 className="h-6 w-6 text-green-600" />}
-              />
-              <MetricCard
-                label="Live Media"
-                value={mediaStats.live}
-                tone="pink"
-                icon={<ImagePlus className="h-6 w-6 text-pink-600" />}
-              />
-            </div>
+              <div className="space-y-5">
 
-            <div className="grid gap-6 xl:grid-cols-[1.3fr,0.9fr]">
-              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
-                <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Order Pipeline</h2>
-                    <p className="text-sm text-gray-600">
-                      Click a stage to jump straight into the order workflow.
-                    </p>
-                  </div>
-                  {lastUpdatedAt && (
-                    <p className="text-sm text-gray-500">
-                      Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  )}
+                {/* ── Metric row ── */}
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <MetricCard label="Total Orders" value={stats.total} tone="blue" icon={<Circle className="h-5 w-5 text-blue-500" />} />
+                  <MetricCard label="Active Pipeline" value={stats.active} tone="purple" icon={<Clock3 className="h-5 w-5 text-purple-500" />} />
+                  <MetricCard label="Completed" value={stats.completed} tone="green" icon={<CheckCircle2 className="h-5 w-5 text-green-500" />} />
+                  <MetricCard label="Live Media" value={mediaStats.live} tone="pink" icon={<ImagePlus className="h-5 w-5 text-pink-500" />} />
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {orderStatuses.map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setView('orders')
-                        setFilterStatus(status)
-                      }}
-                      className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 ${getStatusClasses(status)}`}
-                    >
-                      <p className="text-sm font-semibold uppercase tracking-[0.18em]">
-                        {orderStatusLabels[status]}
-                      </p>
-                      <p className="mt-2 text-3xl font-bold">
-                        {status === 'new'
-                          ? stats.new
-                          : status === 'started'
-                            ? stats.started
-                            : status === 'in_progress'
-                              ? stats.inProgress
-                              : stats.completed}
-                      </p>
-                      <p className="mt-2 text-sm opacity-90">{orderStatusDescriptions[status]}</p>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Live Change Protection</h2>
-                    <p className="text-sm text-gray-600">Every publish, archive, restore, and status change now asks for confirmation.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-sm text-gray-700">
-                  <p>Media updates in the dashboard now control live gallery and hero content through Supabase, not local files.</p>
-                  <p>Order statuses now support four stages: New, Started, In Progress, and Completed.</p>
-                  <p>Notification drafts are ready for admin alerts and customer status updates once the edge function secrets are configured.</p>
-                </div>
-              </section>
-            </div>
-
-            <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
-              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Recent Orders</h2>
-                    <p className="text-sm text-gray-600">Newest activity across contact form and chatbot.</p>
-                  </div>
-                  <button
-                    onClick={() => setView('orders')}
-                    className="rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-700 transition-all hover:bg-purple-200"
-                  >
-                    Open Orders
-                  </button>
-                </div>
-
-                {recentOrders.length === 0 ? (
-                  <p className="rounded-2xl bg-pink-50 px-5 py-6 text-sm text-gray-600">No orders yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {recentOrders.map((order) => (
-                      <button
-                        key={order.id}
-                        onClick={() => {
-                          setView('orders')
-                          setSearchParams({
-                            view: 'orders',
-                            order: order.id,
-                          })
-                        }}
-                        className="w-full rounded-2xl border border-pink-100 bg-white px-4 py-4 text-left transition-all hover:border-purple-200 hover:shadow-md"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="font-semibold text-gray-900">{order.customer_name}</p>
-                            <p className="mt-1 text-sm text-gray-600">{order.cake_description}</p>
-                            <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gray-500">
-                              {order.source === 'chatbot' ? 'Chatbot' : 'Contact Form'}
-                            </p>
-                          </div>
-                          <div className="text-left sm:text-right">
-                            <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-medium ${getStatusClasses(order.status)}`}>
-                              {formatOrderStatus(order.status)}
-                            </span>
-                            <p className="mt-2 text-sm text-gray-500">{formatEventDate(order.event_date)}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-100 text-pink-700">
-                    <BellRing className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Notification Readiness</h2>
-                    <p className="text-sm text-gray-600">What still needs to be switched on in Supabase.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {buildNotificationConfigItems().map((item) => (
-                    <div key={item} className="rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                      {item}
+                {/* ── Pipeline ── */}
+                <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                  <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Order Pipeline</h2>
+                      <p className="text-sm text-gray-500">Click any stage to open the filtered order list.</p>
                     </div>
-                  ))}
-                </div>
+                    {lastUpdatedAt && (
+                      <p className="text-xs text-gray-400">
+                        Updated {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
 
-                <button
-                  onClick={() => setView('notifications')}
-                  className="mt-5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-pink-600 hover:to-purple-600"
-                >
-                  Review Notification Drafts
-                </button>
-              </section>
-            </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {orderStatuses.map((status) => {
+                      const count = status === 'new' ? stats.new : status === 'started' ? stats.started : status === 'in_progress' ? stats.inProgress : stats.completed
+                      return (
+                        <button
+                          key={status}
+                          onClick={() => { setView('orders'); setFilterStatus(status) }}
+                          className={`group relative overflow-hidden rounded-2xl border p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${getStatusClasses(status)}`}
+                        >
+                          <p className="text-xs font-bold uppercase tracking-widest opacity-70">{orderStatusLabels[status]}</p>
+                          <p className="mt-3 text-4xl font-extrabold leading-none">{count}</p>
+                          <p className="mt-2 text-xs leading-snug opacity-80">{orderStatusDescriptions[status]}</p>
+                          <div className="absolute bottom-3 right-3 opacity-20 transition-opacity group-hover:opacity-40">
+                            <ClipboardList className="h-8 w-8" />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+
+                {/* ── Recent Orders + System Status ── */}
+                <div className="grid gap-5 xl:grid-cols-[1.4fr,1fr]">
+
+                  {/* Recent Orders */}
+                  <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
+                        <p className="text-sm text-gray-500">Latest activity from contact form and chatbot.</p>
+                      </div>
+                      <button
+                        onClick={() => setView('orders')}
+                        className="shrink-0 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:from-pink-600 hover:to-purple-600"
+                      >
+                        View all
+                      </button>
+                    </div>
+
+                    {recentOrders.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-pink-200 bg-pink-50/50 px-5 py-8 text-center">
+                        <p className="text-sm font-medium text-gray-600">No orders yet.</p>
+                        <p className="mt-1 text-xs text-gray-400">Orders from the contact form and chatbot will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {recentOrders.map((order) => (
+                          <button
+                            key={order.id}
+                            onClick={() => { setView('orders'); setSearchParams({ view: 'orders', order: order.id }) }}
+                            className="group flex w-full items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-3.5 text-left transition-all hover:border-purple-200 hover:bg-purple-50/40 hover:shadow-sm"
+                          >
+                            {/* Avatar */}
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-sm font-bold text-white shadow-sm">
+                              {order.customer_name.charAt(0).toUpperCase()}
+                            </div>
+
+                            {/* Info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="truncate text-sm font-semibold text-gray-900">{order.customer_name}</p>
+                                <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusClasses(order.status)}`}>
+                                  {formatOrderStatus(order.status)}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 truncate text-xs text-gray-500">{order.cake_description}</p>
+                            </div>
+
+                            {/* Meta */}
+                            <div className="shrink-0 text-right">
+                              <p className="text-xs text-gray-400">{formatEventDate(order.event_date)}</p>
+                              <p className="mt-0.5 text-[10px] uppercase tracking-wide text-gray-400">
+                                {order.source === 'chatbot' ? 'Chatbot' : 'Form'}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* System Status */}
+                  <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+                    <div className="mb-5 flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 shadow-md">
+                        <ShieldCheck className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">System Status</h2>
+                        <p className="text-xs text-gray-500">What's live and running.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {[
+                        { label: 'Edge function deployed', done: true },
+                        { label: 'Resend API key configured', done: true },
+                        { label: 'Admin notification email set', done: true },
+                        { label: 'Customer reply-to Gmail set', done: true },
+                        { label: 'Supabase storage buckets active', done: true },
+                        { label: 'RLS policies applied', done: true },
+                        { label: 'Domain DNS records submitted', done: true },
+                        { label: 'Resend domain verified', done: false },
+                      ].map(({ label, done }) => (
+                        <div
+                          key={label}
+                          className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${done ? 'bg-emerald-50' : 'bg-amber-50'}`}
+                        >
+                          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${done ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white'}`}>
+                            {done ? '✓' : '⏳'}
+                          </span>
+                          <span className={`${done ? 'text-emerald-800' : 'text-amber-800'}`}>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => setView('notifications')}
+                      className="mt-5 w-full rounded-2xl border border-purple-200 bg-purple-50 py-3 text-sm font-semibold text-purple-700 transition-all hover:bg-purple-100"
+                    >
+                      Review email templates →
+                    </button>
+                  </section>
+
+                </div>
               </div>
             )}
 
@@ -1295,16 +1286,25 @@ export default function AdminDashboard() {
             </section>
 
             <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
-              <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Library header */}
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Media Library</h2>
-                  <p className="text-sm text-gray-600">Post, edit, arrange, hide, archive, restore, and delete website images from one panel.</p>
+                  <p className="mt-1 text-sm text-gray-500">Manage all website images — arrange, hide, archive, restore, or delete.</p>
                 </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <MetricPill label="Live" value={mediaStats.live} />
-                  <MetricPill label="Draft" value={mediaStats.draft} />
-                  <MetricPill label="Archived" value={mediaStats.archived} />
+                <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="text-sm font-semibold text-emerald-700">{mediaStats.live} Live</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2">
+                    <span className="h-2 w-2 rounded-full bg-amber-400" />
+                    <span className="text-sm font-semibold text-amber-700">{mediaStats.draft} Draft</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2">
+                    <span className="h-2 w-2 rounded-full bg-gray-400" />
+                    <span className="text-sm font-semibold text-gray-600">{mediaStats.archived} Archived</span>
+                  </div>
                 </div>
               </div>
 
@@ -1314,70 +1314,105 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <div className="mb-5 space-y-4">
+              {/* Filters */}
+              <div className="mb-5 space-y-3">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={mediaSearchQuery}
                     onChange={(event) => setMediaSearchQuery(event.target.value)}
-                    placeholder="Search by title, description, category, or placement"
-                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-700 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                    placeholder="Search by title, description, category, or alt text…"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm text-gray-700 outline-none transition-all focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {(['all', ...mediaPlacementOptions] as const).map((placement) => (
-                    <button
-                      key={placement}
-                      onClick={() => setMediaPlacementFilter(placement)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                        mediaPlacementFilter === placement
-                          ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
-                          : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {placement === 'all' ? 'All Placements' : mediaPlacementLabels[placement]}
-                    </button>
-                  ))}
+                {/* Placement filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Placement:</span>
+                  {(['all', ...mediaPlacementOptions] as const).map((placement) => {
+                    const count = placement === 'all'
+                      ? mediaItems.length
+                      : mediaItems.filter((i) => i.placement === placement).length
+                    return (
+                      <button
+                        key={placement}
+                        onClick={() => setMediaPlacementFilter(placement)}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                          mediaPlacementFilter === placement
+                            ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
+                            : 'border border-gray-200 bg-white text-gray-600 hover:border-purple-200 hover:bg-purple-50'
+                        }`}
+                      >
+                        {placement === 'all' ? 'All' : mediaPlacementLabels[placement]}
+                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                          mediaPlacementFilter === placement ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                        }`}>{count}</span>
+                      </button>
+                    )
+                  })}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {(['all', 'live', 'draft', 'archived'] as const).map((stateValue) => (
+                {/* State filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Status:</span>
+                  {([
+                    { value: 'all' as const, label: 'All', count: mediaItems.length },
+                    { value: 'live' as const, label: 'Live', count: mediaStats.live },
+                    { value: 'draft' as const, label: 'Draft', count: mediaStats.draft },
+                    { value: 'archived' as const, label: 'Archived', count: mediaStats.archived },
+                  ]).map(({ value, label, count }) => (
                     <button
-                      key={stateValue}
-                      onClick={() => setMediaStateFilter(stateValue)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                        mediaStateFilter === stateValue
-                          ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      key={value}
+                      onClick={() => setMediaStateFilter(value)}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                        mediaStateFilter === value
+                          ? 'bg-purple-600 text-white shadow-md'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:border-purple-200 hover:bg-purple-50'
                       }`}
                     >
-                      {stateValue === 'all'
-                        ? 'All States'
-                        : stateValue.charAt(0).toUpperCase() + stateValue.slice(1)}
+                      {label}
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        mediaStateFilter === value ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                      }`}>{count}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               {isLoadingMedia ? (
-                <LoadingPanel label="Loading media..." />
+                <LoadingPanel label="Loading media library…" />
               ) : filteredMedia.length === 0 ? (
-                <EmptyPanel
-                  title="No website media matches the current filters."
-                  description="Upload a new hero or gallery image, or widen the library filters."
-                />
+                <div className="rounded-2xl border border-dashed border-purple-200 bg-purple-50/40 px-6 py-12 text-center">
+                  <ImageIcon className="mx-auto mb-3 h-10 w-10 text-purple-300" />
+                  <p className="text-base font-semibold text-gray-700">
+                    {mediaItems.length === 0 ? 'No images uploaded yet' : 'No images match these filters'}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {mediaItems.length === 0
+                      ? 'Use the upload form to add your first gallery or hero image.'
+                      : `Try selecting "All" for both placement and status, or clear the search.`}
+                  </p>
+                  {mediaItems.length > 0 && (
+                    <button
+                      onClick={() => { setMediaPlacementFilter('all'); setMediaStateFilter('all'); setMediaSearchQuery('') }}
+                      className="mt-4 rounded-full bg-purple-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-purple-700"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {filteredMedia.map((item) => (
                     <div
                       key={item.id}
-                      className={`overflow-hidden rounded-3xl border bg-white shadow-md transition-all ${
-                        item.is_archived ? 'border-gray-200 opacity-80' : 'border-purple-100'
+                      className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-md ${
+                        item.is_archived ? 'border-gray-200 opacity-75' : 'border-purple-100'
                       }`}
                     >
-                      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50">
+                      {/* Image thumbnail */}
+                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50">
                         <img
                           src={item.public_url}
                           alt={item.alt_text || item.title || 'Website media preview'}
@@ -1385,11 +1420,22 @@ export default function AdminDashboard() {
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
                             target.style.display = 'none'
-                            target.parentElement!.innerHTML += `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;"><svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#c084fc' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21,15 16,10 5,21'/></svg><p style='font-size:12px;color:#a78bfa;'>Image unavailable</p></div>`
+                            target.parentElement!.innerHTML += `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;"><svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#c084fc' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21,15 16,10 5,21'/></svg><p style='font-size:12px;color:#a78bfa;margin:0'>Image unavailable</p></div>`
                           }}
                         />
+                        {/* Overlay badges */}
+                        <div className="absolute left-2 top-2 flex gap-1.5">
+                          <span className="rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+                            {mediaPlacementLabels[item.placement]}
+                          </span>
+                          {item.category && (
+                            <span className="rounded-full bg-pink-500/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                              {item.category}
+                            </span>
+                          )}
+                        </div>
                         <div className="absolute right-2 top-2">
-                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-sm ${
                             item.is_archived
                               ? 'bg-gray-700/80 text-white'
                               : item.is_published
@@ -1401,51 +1447,17 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="space-y-4 p-5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
-                            {mediaPlacementLabels[item.placement]}
-                          </span>
-                          {item.category && (
-                            <span className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-700">
-                              {item.category}
-                            </span>
-                          )}
-                        </div>
+                      {/* Card body */}
+                      <div className="p-4">
+                        <p className="truncate text-sm font-semibold text-gray-900">{item.title || 'Untitled image'}</p>
+                        {item.description && (
+                          <p className="mt-0.5 line-clamp-1 text-xs text-gray-500">{item.description}</p>
+                        )}
+                        <p className="mt-1 text-xs text-gray-400">Sort order: {item.sort_order} · {formatEventDate(item.updated_at)}</p>
 
-                        <div>
-                          <p className="text-lg font-semibold text-gray-900">{item.title || 'Untitled image'}</p>
-                          <p className="mt-1 text-sm text-gray-600">
-                            {item.description || 'No description added yet.'}
-                          </p>
-                        </div>
-
-                        <div className="grid gap-2 text-sm text-gray-600 sm:grid-cols-2">
-                          <p><span className="font-semibold text-gray-800">Sort:</span> {item.sort_order}</p>
-                          <p><span className="font-semibold text-gray-800">Updated:</span> {formatEventDate(item.updated_at)}</p>
-                        </div>
-
-                        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Arrange</p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <button
-                              onClick={() => requestMoveMedia(item, 'up')}
-                              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100"
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                              Move Up
-                            </button>
-                            <button
-                              onClick={() => requestMoveMedia(item, 'down')}
-                              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100"
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                              Move Down
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
+                        {/* Actions row */}
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                          {/* Edit */}
                           <button
                             onClick={() => {
                               setMediaForm(buildMediaFormState(item))
@@ -1455,26 +1467,42 @@ export default function AdminDashboard() {
                                 mediaFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                               }, 50)
                             }}
-                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
+                            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-all hover:border-purple-300 hover:bg-purple-50 hover:text-purple-700"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3 w-3" />
                             Edit
+                          </button>
+
+                          {/* Arrange */}
+                          <button
+                            onClick={() => requestMoveMedia(item, 'up')}
+                            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-all hover:bg-gray-50"
+                            title="Move up"
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => requestMoveMedia(item, 'down')}
+                            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-all hover:bg-gray-50"
+                            title="Move down"
+                          >
+                            <ArrowDown className="h-3 w-3" />
                           </button>
 
                           {item.is_archived ? (
                             <>
                               <button
                                 onClick={() => requestRestoreMedia(item)}
-                                className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-700 transition-all hover:bg-emerald-200"
+                                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-all hover:bg-emerald-200"
                               >
-                                <RotateCcw className="h-4 w-4" />
+                                <RotateCcw className="h-3 w-3" />
                                 Restore
                               </button>
                               <button
                                 onClick={() => requestDeleteMedia(item)}
-                                className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition-all hover:bg-red-200"
+                                className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition-all hover:bg-red-200"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3" />
                                 Delete
                               </button>
                             </>
@@ -1482,16 +1510,20 @@ export default function AdminDashboard() {
                             <>
                               <button
                                 onClick={() => requestToggleMediaVisibility(item, !item.is_published)}
-                                className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-700 transition-all hover:bg-purple-200"
+                                className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                  item.is_published
+                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                }`}
                               >
-                                {item.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                {item.is_published ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                                 {item.is_published ? 'Hide' : 'Publish'}
                               </button>
                               <button
                                 onClick={() => requestArchiveMedia(item)}
-                                className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition-all hover:bg-red-200"
+                                className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-all hover:bg-red-100"
                               >
-                                <Archive className="h-4 w-4" />
+                                <Archive className="h-3 w-3" />
                                 Archive
                               </button>
                             </>

@@ -18,7 +18,7 @@ interface Message {
 }
 
 const WELCOME_MESSAGE =
-  "Welcome to EVO Cakes. I can answer pricing and cake questions, or take your order step by step. Tap a quick option below, tell me what you're celebrating, or upload an inspiration photo."
+  "Welcome to Evocative Cakes. I can answer pricing and cake questions, or take your order step by step. Tap a quick option below, tell me what you're celebrating, or upload an inspiration photo."
 
 const QUICK_ACTIONS = [
   { label: 'Place an order', prompt: 'I want to place an order.' },
