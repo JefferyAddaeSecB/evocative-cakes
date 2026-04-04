@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -230,6 +230,8 @@ export default function AdminDashboard() {
   const initialView: AdminView = isAdminView(requestedView) ? requestedView : 'overview'
   const focusOrderId = searchParams.get('order')
 
+  const mediaFormRef = useRef<HTMLElement>(null)
+
   const [activeView, setActiveView] = useState<AdminView>(initialView)
   const [orders, setOrders] = useState<ResolvedOrder[]>([])
   const [mediaItems, setMediaItems] = useState<WebsiteMediaItem[]>([])
@@ -246,6 +248,7 @@ export default function AdminDashboard() {
   const [mediaSetupMessage, setMediaSetupMessage] = useState<string | null>(null)
   const [mediaForm, setMediaForm] = useState<MediaFormState>(defaultMediaFormState)
   const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [mediaFilePreview, setMediaFilePreview] = useState<string | null>(null)
   const [confirmationState, setConfirmationState] = useState<ConfirmationState | null>(null)
   const [isConfirmingAction, setIsConfirmingAction] = useState(false)
   const [isSavingMedia, setIsSavingMedia] = useState(false)
@@ -281,6 +284,7 @@ export default function AdminDashboard() {
   const resetMediaForm = () => {
     setMediaForm(defaultMediaFormState)
     setMediaFile(null)
+    setMediaFilePreview(null)
   }
 
   const loadOrders = useCallback(async (backgroundRefresh = false) => {
@@ -1114,17 +1118,17 @@ export default function AdminDashboard() {
 
             {activeView === 'media' && (
               <div className="grid gap-6 xl:grid-cols-[0.9fr,1.1fr]">
-            <section className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+            <section ref={mediaFormRef} className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-100 text-pink-700">
-                  <Upload className="h-5 w-5" />
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${mediaForm.id ? 'bg-purple-100 text-purple-700' : 'bg-pink-100 text-pink-700'}`}>
+                  {mediaForm.id ? <Pencil className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">
                     {mediaForm.id ? 'Edit Website Media' : 'Add Website Media'}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    Upload hero slides or gallery images that can go live without touching repo files.
+                    {mediaForm.id ? 'Update the details or replace the image file.' : 'Upload hero slides or gallery images that can go live without touching repo files.'}
                   </p>
                 </div>
               </div>
@@ -1216,21 +1220,47 @@ export default function AdminDashboard() {
                   />
                 </label>
 
-                <label className="space-y-3 rounded-2xl border border-dashed border-purple-200 bg-purple-50/60 p-4 text-sm font-medium text-gray-700">
-                  <span className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4 text-purple-600" />
-                    {mediaForm.id ? 'Replace image file (optional)' : 'Upload image file'}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(event) => setMediaFile(event.target.files?.[0] || null)}
-                    className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:font-semibold file:text-purple-700 hover:file:bg-purple-100"
-                  />
-                  <p className="text-xs text-gray-500">
-                    {mediaFile ? `Selected: ${mediaFile.name}` : mediaForm.id ? 'Leave empty to keep the current image file.' : 'PNG, JPG, or WEBP up to 10MB.'}
-                  </p>
-                </label>
+                <div className="space-y-3">
+                  {mediaFilePreview && (
+                    <div className="relative overflow-hidden rounded-2xl border border-purple-200 bg-gray-50">
+                      <img
+                        src={mediaFilePreview}
+                        alt="Preview"
+                        className="h-48 w-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                      {mediaFile && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-3 py-2">
+                          <p className="truncate text-xs font-medium text-white">{mediaFile.name}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <label className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-dashed border-purple-200 bg-purple-50/60 p-4 text-sm font-medium text-gray-700 transition-colors hover:border-purple-400 hover:bg-purple-50">
+                    <span className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4 text-purple-600" />
+                      {mediaFile ? 'Change selected image' : mediaForm.id ? 'Replace image file (optional)' : 'Click to select image'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] || null
+                        setMediaFile(file)
+                        if (file) {
+                          const preview = URL.createObjectURL(file)
+                          setMediaFilePreview(preview)
+                        } else if (!mediaForm.id) {
+                          setMediaFilePreview(null)
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-gray-500">
+                      {mediaFile ? `✓ ${mediaFile.name} (${(mediaFile.size / 1024 / 1024).toFixed(1)} MB)` : mediaForm.id ? 'Leave empty to keep the current image.' : 'PNG, JPG, or WEBP · up to 10MB'}
+                    </p>
+                  </label>
+                </div>
 
                 <label className="flex items-center gap-3 rounded-2xl border border-pink-100 bg-pink-50/70 px-4 py-3 text-sm font-medium text-gray-800">
                   <input
@@ -1413,6 +1443,10 @@ export default function AdminDashboard() {
                             onClick={() => {
                               setMediaForm(buildMediaFormState(item))
                               setMediaFile(null)
+                              setMediaFilePreview(item.public_url)
+                              setTimeout(() => {
+                                mediaFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }, 50)
                             }}
                             className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
                           >

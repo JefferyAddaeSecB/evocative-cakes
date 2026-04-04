@@ -66,7 +66,7 @@ export default function HomePage() {
                 className="text-4xl md:text-7xl lg:text-8xl font-bold leading-tight"
               >
                 <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent block">
-                  EVO
+                  Evocative
                 </span>
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent block">
                   Cakes
