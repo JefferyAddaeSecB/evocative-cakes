@@ -62,19 +62,14 @@ const slideCopy = [
   },
 ] as const
 
+// Only use first 6 hero images — reduces initial load, rest are never seen anyway
 const heroImageFiles = [
   'hero 1.jpg',
-  'hero 10.jpg',
-  'hero 12.JPG',
-  'hero 13.jpg',
   'hero 2.jpg',
   'hero 3.jpg',
   'hero 4.jpg',
   'hero 5.jpg',
   'hero 6.jpg',
-  'hero 7.JPG',
-  'hero 8.jpg',
-  'hero 9.JPG',
 ]
 
 const getSlideNumber = (fileName: string) => {
@@ -135,23 +130,22 @@ export default function HeroCarousel() {
 
   useEffect(() => {
     setCurrent((previousCurrent) => {
-      if (slides.length === 0) {
-        return 0
-      }
-
+      if (slides.length === 0) return 0
       return previousCurrent % slides.length
     })
   }, [slides.length])
 
+  // Auto-advance — pauses when tab is hidden (Page Visibility API)
   useEffect(() => {
-    if (slides.length === 0) {
-      return undefined
+    if (slides.length === 0) return undefined
+
+    const tick = () => {
+      if (!document.hidden) {
+        setCurrent((prev) => (prev + 1) % slides.length)
+      }
     }
 
-    const timer = window.setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length)
-    }, 4000)
-
+    const timer = window.setInterval(tick, 4500)
     return () => window.clearInterval(timer)
   }, [slides.length])
 
@@ -171,6 +165,12 @@ export default function HeroCarousel() {
           <img
             src={slide.image}
             alt={slide.alt}
+            // First slide is above-the-fold LCP — eager + high priority
+            loading={current === 0 ? 'eager' : 'lazy'}
+            decoding={current === 0 ? 'sync' : 'async'}
+            fetchPriority={current === 0 ? 'high' : 'auto'}
+            width={1200}
+            height={600}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -197,12 +197,14 @@ export default function HeroCarousel() {
 
       <button
         onClick={() => setCurrent((prev) => (prev - 1 + slides.length) % slides.length)}
+        aria-label="Previous slide"
         className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-all duration-300 hover:bg-white/30"
       >
         <ChevronLeft className="h-6 w-6 text-white" />
       </button>
       <button
         onClick={() => setCurrent((prev) => (prev + 1) % slides.length)}
+        aria-label="Next slide"
         className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-all duration-300 hover:bg-white/30"
       >
         <ChevronRight className="h-6 w-6 text-white" />
@@ -213,6 +215,7 @@ export default function HeroCarousel() {
           <button
             key={item.id}
             onClick={() => setCurrent(index)}
+            aria-label={`Go to slide ${index + 1}`}
             className={`rounded-full transition-all duration-300 ${
               index === current
                 ? 'h-3 w-3 scale-125 bg-white'

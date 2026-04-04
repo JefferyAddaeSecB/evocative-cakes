@@ -226,6 +226,8 @@ function buildLiveMediaAltText(image: {
   return image.alt_text || image.title || image.description || `${image.category} cake by EVO Cakes`
 }
 
+const PAGE_SIZE = 18
+
 export default function GalleryGrid({ initialCategory }: { initialCategory?: string }) {
   const normalizedInitialCategory =
     initialCategory && galleryCategories.includes(initialCategory as GalleryCategory)
@@ -237,6 +239,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
   const [lightboxImageSrc, setLightboxImageSrc] = useState<string | null>(null)
   const [thumbnailFallbackIds, setThumbnailFallbackIds] = useState<string[]>([])
   const [liveImages, setLiveImages] = useState<GalleryImage[]>([])
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   useEffect(() => {
     let isCancelled = false
@@ -280,6 +283,9 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
       ? allImages
       : allImages.filter((image) => image.category === selectedCategory)
 
+  const visibleImages = filteredImages.slice(0, visibleCount)
+  const hasMore = visibleCount < filteredImages.length
+
   const activeImage = lightboxIndex !== null ? filteredImages[lightboxIndex] : null
 
   const goToPrev = useCallback(() => {
@@ -298,6 +304,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
 
   useEffect(() => {
     setLightboxIndex(null)
+    setVisibleCount(PAGE_SIZE)
   }, [selectedCategory])
 
   useEffect(() => {
@@ -350,38 +357,56 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-3">
-          {filteredImages.map((image, index) => (
-            <motion.div
-              key={image.id}
-              className="group relative aspect-[4/5] cursor-pointer overflow-hidden rounded-2xl shadow-xl sm:h-80 sm:aspect-auto"
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              viewport={{ once: true, amount: 0.12, margin: '180px 0px' }}
-              onClick={() => setLightboxIndex(index)}
-            >
-              <img
-                src={thumbnailFallbackIds.includes(image.id) ? image.src : image.previewSrc}
-                alt={image.alt}
-                loading={index < 6 ? 'eager' : 'lazy'}
-                decoding="async"
-                fetchPriority={index < 3 ? 'high' : 'auto'}
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
-                onError={() => {
-                  setThumbnailFallbackIds((currentIds) =>
-                    currentIds.includes(image.id) ? currentIds : [...currentIds, image.id]
-                  )
-                }}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-3">
+            {visibleImages.map((image, index) => (
+              <motion.div
+                key={image.id}
+                className="group relative aspect-[4/5] cursor-pointer overflow-hidden rounded-2xl shadow-xl sm:h-80 sm:aspect-auto"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                viewport={{ once: true, amount: 0.12, margin: '180px 0px' }}
+                onClick={() => setLightboxIndex(index)}
+              >
+                <img
+                  src={thumbnailFallbackIds.includes(image.id) ? image.src : image.previewSrc}
+                  alt={image.alt}
+                  width={400}
+                  height={500}
+                  loading={index < 6 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  fetchPriority={index < 3 ? 'high' : 'auto'}
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
+                  onError={() => {
+                    setThumbnailFallbackIds((currentIds) =>
+                      currentIds.includes(image.id) ? currentIds : [...currentIds, image.id]
+                    )
+                  }}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
 
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <ZoomIn className="h-7 w-7 text-white sm:h-8 sm:w-8" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <ZoomIn className="h-7 w-7 text-white sm:h-8 sm:w-8" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white px-8 py-3 text-sm font-semibold text-purple-700 shadow-md transition-all hover:border-pink-300 hover:bg-pink-50 hover:shadow-lg"
+              >
+                Load more
+                <span className="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-bold text-pink-600">
+                  {filteredImages.length - visibleCount} remaining
+                </span>
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <AnimatePresence>

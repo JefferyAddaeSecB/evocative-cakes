@@ -62,30 +62,3 @@ body {
     @apply antialiased;
   }
 }
-
-@keyframes float-dot {
-  0% {
-    transform: translate3d(0, 0, 0) scale(0.92);
-    opacity: 0;
-  }
-
-  20% {
-    opacity: 0.34;
-  }
-
-  80% {
-    opacity: 0.2;
-  }
-
-  100% {
-    transform: translate3d(var(--dot-drift-x, 0px), calc(var(--dot-drift-y, 90px) * -1), 0)
-      scale(1.06);
-    opacity: 0;
-  }
-}
-
-.floating-dot {
-  animation: float-dot var(--dot-duration, 12s) linear infinite;
-  animation-delay: calc(var(--dot-delay, 0s) * -1);
-  will-change: transform, opacity;
-}

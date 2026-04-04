@@ -19,26 +19,32 @@ export default defineConfig({
     sourcemap: false,
     minify: 'terser',
     target: 'esnext',
+    // Inline small assets (< 8KB) as base64 — eliminates extra HTTP requests for tiny files
+    assetsInlineLimit: 8192,
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) {
-            return
+          // recharts is only used in the admin dashboard — keep it out of the main bundle
+          if (id.includes('recharts') || id.includes('victory-')) {
+            return 'vendor-charts'
           }
-
+          // framer-motion is a large shared dep — isolate it for better caching
           if (id.includes('framer-motion')) {
-            return 'motion'
+            return 'vendor-motion'
           }
-
+          // Supabase SDK — isolate for caching
           if (id.includes('@supabase')) {
-            return 'supabase-sdk'
+            return 'vendor-supabase'
           }
-
+          // Core React + router in a stable vendor chunk
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('react-router')) {
+            return 'vendor-react'
+          }
+          // OpenAI SDK — only used by chatbot
           if (id.includes('openai')) {
-            return 'openai-sdk'
+            return 'vendor-openai'
           }
-
-          return 'vendor'
         },
       },
     },

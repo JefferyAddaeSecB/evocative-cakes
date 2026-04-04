@@ -99,6 +99,11 @@ export default function FeaturedCategories() {
                   <img
                     src={category.image}
                     alt={category.name}
+                    width={600}
+                    height={320}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                     className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-700"
                   />
 

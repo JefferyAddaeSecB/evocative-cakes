@@ -6,7 +6,6 @@ import HeroCarousel from '@/components/HeroCarousel'
 import FeaturedCategories from '@/components/FeaturedCategories'
 
 export default function HomePage() {
-  const featuredRef = useRef(null)
   const ctaRef = useRef(null)
   const ctaInView = useInView(ctaRef, { once: true })
 
@@ -15,29 +14,9 @@ export default function HomePage() {
       {/* SECTION 1 - Hero */}
       <section className="min-h-screen relative overflow-hidden flex items-center pt-16 md:pt-0">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-20">
-          {/* Mobile Layout: Carousel First */}
-          <div className="md:hidden mb-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="relative"
-            >
-              <HeroCarousel />
-              {/* Floating gold star badge */}
-              <motion.div
-                className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-xl z-10"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-              >
-                <Star className="w-6 h-6 text-white" />
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Text Content */}
           <div className="grid lg:grid-cols-2 gap-8 md:gap-16 items-center">
-            {/* Left Column */}
+
+            {/* Left Column — Text */}
             <div>
               {/* Badge */}
               <motion.div
@@ -46,12 +25,8 @@ export default function HomePage() {
                 transition={{ delay: 0.1 }}
               >
                 <div className="flex items-center space-x-2 mb-4 md:mb-6">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <Sparkles className="w-6 md:w-8 h-6 md:h-8 text-yellow-500" />
-                  </motion.div>
+                  {/* CSS spin — no JS animation loop */}
+                  <Sparkles className="w-6 md:w-8 h-6 md:h-8 text-yellow-500 animate-spin [animation-duration:4s]" />
                   <span className="text-sm md:text-lg font-medium text-purple-600 bg-white/80 backdrop-blur-sm px-3 md:px-4 py-1 md:py-2 rounded-full border border-purple-200">
                     Premium Cake Artistry
                   </span>
@@ -107,56 +82,44 @@ export default function HomePage() {
               </motion.div>
             </div>
 
-            {/* Right Column - HeroCarousel (Desktop Only) */}
+            {/* Right Column — HeroCarousel rendered ONCE, shown above text on mobile via order */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="relative hidden lg:block"
+              transition={{ delay: 0.3, duration: 0.7 }}
+              className="relative order-first lg:order-last mb-6 lg:mb-0"
             >
               <HeroCarousel />
-              {/* Floating gold star badge */}
-              <motion.div
-                className="absolute -top-6 -right-6 w-28 h-28 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-2xl z-10"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+              {/* Floating star badge */}
+              <div
+                className="absolute -top-4 -right-4 lg:-top-6 lg:-right-6 w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-xl z-10 animate-spin [animation-duration:8s]"
               >
-                <Star className="w-10 h-10 text-white" />
-              </motion.div>
+                <Star className="w-6 h-6 lg:w-10 lg:h-10 text-white" />
+              </div>
             </motion.div>
+
           </div>
         </div>
       </section>
 
       {/* SECTION 2 - Featured Categories */}
-      <section ref={featuredRef}>
+      <section>
         <FeaturedCategories />
       </section>
 
       {/* SECTION 3 - CTA */}
       <section className="py-32 px-4 relative overflow-hidden" ref={ctaRef}>
-        {/* Animated gradient bg */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-pink-100/80 via-purple-100/80 to-blue-100/80 backdrop-blur-sm"
-          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-          style={{ backgroundSize: '200% 200%' }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-r from-pink-100/80 via-purple-100/80 to-blue-100/80 backdrop-blur-sm" />
         <div className="absolute inset-0 bg-gradient-to-r from-pink-200/20 to-purple-200/20" />
 
         <div className="container mx-auto max-w-4xl text-center relative z-10">
-          {/* Spinning badge */}
+          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={ctaInView ? { opacity: 1, scale: 1 } : {}}
           >
             <div className="inline-flex items-center space-x-2 bg-white/50 backdrop-blur-sm rounded-full px-6 py-3 mb-6 border border-purple-200">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              >
-                <Sparkles className="w-5 h-5 text-purple-500" />
-              </motion.div>
+              <Sparkles className="w-5 h-5 text-purple-500 animate-spin [animation-duration:3s]" />
               <span className="text-purple-700 font-medium">Ready to Order?</span>
             </div>
           </motion.div>
