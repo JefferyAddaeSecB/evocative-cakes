@@ -409,7 +409,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
                     setLightboxImageSrc(activeImage.previewSrc)
                   }
                 }}
-                className="w-full rounded-lg"
+                className="w-full h-[80vh] object-contain rounded-lg"
               />
 
               <button

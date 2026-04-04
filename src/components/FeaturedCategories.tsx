@@ -99,7 +99,7 @@ export default function FeaturedCategories() {
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-700"
                   />
 
                   {/* Overlay Gradient */}
