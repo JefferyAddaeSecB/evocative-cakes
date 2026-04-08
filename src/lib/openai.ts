@@ -1,28 +1,16 @@
-import type OpenAI from 'openai'
+import type { Message as ConversationMessage } from './openai'
 
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY
 
 if (!apiKey) {
-  console.warn('OpenAI API key not found. Chatbot will use fallback responses.')
+  console.warn('Note: API key is handled on the backend for security.')
 }
 
-let openaiClientPromise: Promise<OpenAI | null> | null = null
+let openaiClientPromise: Promise<any | null> | null = null
 
 async function getOpenAIClient() {
-  if (!apiKey) {
-    return null
-  }
-
-  if (!openaiClientPromise) {
-    openaiClientPromise = import('openai').then(({ default: OpenAIClient }) => {
-      return new OpenAIClient({
-        apiKey,
-        dangerouslyAllowBrowser: true,
-      })
-    })
-  }
-
-  return openaiClientPromise
+  // OpenAI client is no longer used in the browser
+  return null
 }
 
 const BAKERY_FACTS = `
@@ -109,63 +97,29 @@ const DIETARY_MATCHERS = [
 ]
 
 export async function sendChatMessage(messages: Message[], imageUrl?: string): Promise<string> {
-  const openai = await getOpenAIClient()
-  const userMessages = messages.filter((message) => message.role === 'user')
-  const draft = buildOrderDraft(userMessages, Boolean(imageUrl))
-  const wantsOrder = hasOrderIntent(
-    normalizeWhitespace(userMessages.map((message) => message.content).join(' ')),
-    draft
-  )
-
-  if (!openai) {
-    return getFallbackResponse(messages, Boolean(imageUrl))
-  }
-
   try {
-    const chatMessages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'system', content: buildOrderContextPrompt(draft, wantsOrder) },
-      ...messages.map(
-        (message) =>
-          ({
-            role: message.role,
-            content: message.content,
-          }) as OpenAI.ChatCompletionMessageParam
-      ),
-    ]
-
-    if (imageUrl && chatMessages[chatMessages.length - 1].role === 'user') {
-      const lastMessage = chatMessages[chatMessages.length - 1]
-      const messageText = (lastMessage.content as string) || 'What do you think of this cake inspiration?'
-
-      chatMessages[chatMessages.length - 1] = {
-        role: 'user',
-        content: [
-          { type: 'text', text: messageText },
-          {
-            type: 'image_url',
-            image_url: {
-              url: imageUrl,
-              detail: 'high',
-            },
-          },
-        ],
-      }
-    }
-
-    const response = await openai.chat.completions.create({
-      model: imageUrl ? 'gpt-4o' : 'gpt-4o-mini',
-      messages: chatMessages,
-      max_tokens: 350,
-      temperature: 0.75,
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+      }),
     })
 
-    return (
-      response.choices[0].message.content ||
-      "I'm sorry, I had trouble with that. Please try your message again."
-    )
+    if (!response.ok) {
+      console.error('Chat API error:', response.status, response.statusText)
+      return "I'm having technical trouble right now. You can still ask your question again, or use the contact form for a manual quote."
+    }
+
+    const data = await response.json()
+    return data.content || "I'm sorry, I had trouble with that. Please try your message again."
   } catch (error) {
-    console.error('OpenAI error:', error)
+    console.error('Chat request error:', error)
     return "I'm having technical trouble right now. You can still ask your question again, or use the contact form for a manual quote."
   }
 }
