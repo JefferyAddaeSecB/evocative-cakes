@@ -101,7 +101,11 @@ const DIETARY_MATCHERS = [
 
 export async function sendChatMessage(messages: Message[], imageUrl?: string): Promise<string> {
   try {
-    const response = await fetch('/api/chat', {
+    const apiUrl = import.meta.env.PROD 
+      ? 'https://your-production-domain.com/api/chat'
+      : 'http://localhost:3001/api/chat'
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

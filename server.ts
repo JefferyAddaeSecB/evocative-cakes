@@ -1,6 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+import express from 'express'
+import cors from 'cors'
+import bodyParser from 'body-parser'
 import OpenAI from 'openai'
 
+const app = express()
+const PORT = process.env.PORT || 3001
+
+// Middleware
+app.use(cors())
+app.use(bodyParser.json({ limit: '50mb' }))
+
+// Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
@@ -45,25 +55,20 @@ When a customer wants to place an order, collect:
 
 Be warm, professional, and helpful. Always confirm details before finalizing orders.`
 
-export async function POST(request: NextRequest) {
+// Chat endpoint
+app.post('/api/chat', async (req, res) => {
   try {
-    const { messages } = await request.json()
+    const { messages } = req.body
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
-      )
+      return res.status(500).json({ error: 'OpenAI API key not configured' })
     }
 
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: 'Messages array required' },
-        { status: 400 }
-      )
+      return res.status(400).json({ error: 'Messages array required' })
     }
 
-    // Add system prompt to messages if not already present
+    // Add system prompt to messages
     const messagesWithSystem = [
       {
         role: 'system' as const,
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     const content = response.choices[0].message.content
 
-    return NextResponse.json({
+    return res.json({
       role: 'assistant',
       content,
     })
@@ -89,15 +94,18 @@ export async function POST(request: NextRequest) {
     console.error('Chat API error:', error)
 
     if (error.status === 401) {
-      return NextResponse.json(
-        { error: 'Invalid API key' },
-        { status: 401 }
-      )
+      return res.status(401).json({ error: 'Invalid API key' })
     }
 
-    return NextResponse.json(
-      { error: 'Failed to process chat request' },
-      { status: 500 }
-    )
+    return res.status(500).json({ error: 'Failed to process chat request' })
   }
-}
+})
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+app.listen(PORT, () => {
+  console.log(`🚀 Backend server running on port ${PORT}`)
+})
