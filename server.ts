@@ -1,4 +1,5 @@
-import express from 'express'
+import 'dotenv/config'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import OpenAI from 'openai'
@@ -56,7 +57,7 @@ When a customer wants to place an order, collect:
 Be warm, professional, and helpful. Always confirm details before finalizing orders.`
 
 // Chat endpoint
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', async (req: Request, res: Response) => {
   try {
     const { messages } = req.body
 
@@ -102,7 +103,7 @@ app.post('/api/chat', async (req, res) => {
 })
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' })
 })
 
