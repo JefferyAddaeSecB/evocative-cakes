@@ -1,4 +1,7 @@
-import type { Message as ConversationMessage } from './openai'
+interface Message {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
 
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY
 
