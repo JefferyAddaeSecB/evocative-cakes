@@ -102,8 +102,8 @@ const DIETARY_MATCHERS = [
 export async function sendChatMessage(messages: Message[], imageUrl?: string): Promise<string> {
   try {
     const apiUrl = import.meta.env.PROD 
-      ? 'https://your-production-domain.com/api/chat'
-      : 'http://localhost:3001/api/chat'
+      ? '/api/chat'  // On Vercel, calls the serverless function
+      : 'http://localhost:3001/api/chat'  // Locally, calls Express server
     
     const response = await fetch(apiUrl, {
       method: 'POST',
