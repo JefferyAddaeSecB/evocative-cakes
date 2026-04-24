@@ -89,7 +89,7 @@ export default async function handler(
 
     const chatResponse = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
-      messages: messagesWithSystem,
+      messages: messagesWithSystem as any,
       temperature: 0.7,
       max_tokens: 500,
     })

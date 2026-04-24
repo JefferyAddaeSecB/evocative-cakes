@@ -249,6 +249,9 @@ export default function ChatbotWidget() {
 
     setMessages((previous) => [...previous, userMessage])
     setInputValue('')
+    setUploadedImage(null)
+    setImagePreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     setIsLoading(true)
 
     try {
@@ -301,9 +304,6 @@ export default function ChatbotWidget() {
         }
       }
 
-      if (currentImage) {
-        removeImage()
-      }
     } catch (error) {
       console.error('Error sending message:', error)
       toast.error('Failed to send message. Please try again.')

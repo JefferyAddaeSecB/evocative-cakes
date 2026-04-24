@@ -95,7 +95,7 @@ function emailWrapper(bodyContent: string) {
           <tr>
             <td style="background:#faf5ff;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
               <p style="margin:0 0 6px;font-size:13px;color:#7c3aed;font-weight:600;">EVO Cakes</p>
-              <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;">Questions? Reply to this email or reach us at <a href="mailto:hello@evocativecakes.com" style="color:#8b5cf6;text-decoration:none;">hello@evocativecakes.com</a></p>
+              <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;">Questions? Reply to this email or reach us at <a href="mailto:evocativecakes@gmail.com" style="color:#8b5cf6;text-decoration:none;">evocativecakes@gmail.com</a></p>
               <p style="margin:0;font-size:11px;color:#d1d5db;">© ${new Date().getFullYear()} EVO Cakes. All rights reserved.</p>
             </td>
           </tr>

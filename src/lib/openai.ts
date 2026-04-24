@@ -101,21 +101,31 @@ const DIETARY_MATCHERS = [
 
 export async function sendChatMessage(messages: Message[], imageUrl?: string): Promise<string> {
   try {
-    const apiUrl = import.meta.env.PROD 
-      ? '/api/chat'  // On Vercel, calls the serverless function
-      : 'http://localhost:3001/api/chat'  // Locally, calls Express server
-    
+    const apiUrl = import.meta.env.PROD
+      ? '/api/chat'
+      : 'http://localhost:3001/api/chat'
+
+    const lastMessage = messages[messages.length - 1]
+    const priorMessages = messages.slice(0, -1).map(msg => ({ role: msg.role, content: msg.content }))
+
+    const lastContent = imageUrl
+      ? [
+          { type: 'text', text: lastMessage.content || 'Here is a cake inspiration image for reference.' },
+          { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } },
+        ]
+      : lastMessage.content
+
+    const bodyMessages = [
+      ...priorMessages,
+      { role: lastMessage.role, content: lastContent },
+    ]
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messages: messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-      }),
+      body: JSON.stringify({ messages: bodyMessages }),
     })
 
     if (!response.ok) {
