@@ -30,11 +30,24 @@ const QUICK_ACTIONS = [
 const PROMPT_DELAY_MS = 8000
 const PROMPT_VISIBLE_MS = 12000
 
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
+function compressImageToDataUrl(file: File, maxDimension = 800, quality = 0.65): Promise<string> {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result as string)
     reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.onloadend = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('Failed to decode image'))
+      img.onload = () => {
+        const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = reader.result as string
+    }
     reader.readAsDataURL(file)
   })
 }
@@ -224,7 +237,7 @@ export default function ChatbotWidget() {
 
     let imageBase64: string | null = null
     if (currentImage) {
-      imageBase64 = await readFileAsDataUrl(currentImage)
+      imageBase64 = await compressImageToDataUrl(currentImage)
     }
 
     const userMessage: Message = {
