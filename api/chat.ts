@@ -52,7 +52,12 @@ When a customer wants to place an order, collect:
 - Event date
 - Cake description (flavors, size, design ideas, dietary needs)
 
-Be warm, professional, and helpful. Always confirm details before finalizing orders.`
+Be warm, professional, and helpful. Always confirm details before finalizing orders.
+
+IMPORTANT: Once you have collected at least the customer's name, email, phone, event type, and cake description, provide a friendly confirmation summary and then on a NEW LINE output exactly this format (no extra text after it):
+ORDER_COMPLETE: {"customer_name":"...","customer_email":"...","customer_phone":"...","event_type":"...","event_date":"...","cake_description":"...","dietary_restrictions":"...","serving_size":"...","design_preferences":"..."}
+
+The JSON must use double quotes only. Use empty string "" for any fields not provided.`
 
 export default async function handler(
   request: VercelRequest,
