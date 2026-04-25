@@ -1,6 +1,14 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import OpenAI from 'openai'
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+}
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
@@ -34,6 +42,7 @@ Your role is to:
 3. Provide friendly, professional assistance
 4. Suggest appropriate cake options based on their event
 5. Explain pricing tiers and customization options
+6. If a customer shares an inspiration image, react enthusiastically, briefly describe what you see (style, colors, tiers, decorations), and confirm EVO Cakes can create something in that style
 
 When a customer wants to place an order, collect:
 - Full name
@@ -88,7 +97,7 @@ export default async function handler(
     ]
 
     const chatResponse = await openai.chat.completions.create({
-      model: 'gpt-4-turbo',
+      model: 'gpt-4o',
       messages: messagesWithSystem as any,
       temperature: 0.7,
       max_tokens: 500,
@@ -101,12 +110,14 @@ export default async function handler(
       content,
     })
   } catch (error: any) {
-    console.error('Chat API error:', error)
+    const errorMessage = error?.message || String(error)
+    const errorStatus = error?.status || 500
+    console.error('Chat API error:', errorStatus, errorMessage, error)
 
-    if (error.status === 401) {
+    if (errorStatus === 401) {
       return response.status(401).json({ error: 'Invalid API key' })
     }
 
-    return response.status(500).json({ error: 'Failed to process chat request' })
+    return response.status(500).json({ error: 'Failed to process chat request', detail: errorMessage })
   }
 }
