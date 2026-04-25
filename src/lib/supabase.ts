@@ -3,6 +3,7 @@ import {
   buildAdminNewOrderNotification,
   buildCustomerOrderAcknowledgementNotification,
   buildCustomerOrderStatusNotification,
+  buildCustomerThankYouNotification,
   buildDashboardOrderLink,
   type NotificationOrderContext,
 } from '@/lib/admin-notifications'
@@ -375,6 +376,20 @@ export async function sendCustomerOrderStatusNotification(
     nextStatus,
     previousStatus
   )
+
+  return dispatchNotification({
+    audience: 'customer',
+    email: {
+      to: order.customer_email,
+      subject: draft.subject,
+      html: draft.html,
+      text: draft.text,
+    },
+  })
+}
+
+export async function sendCustomerThankYouNotification(order: OrderRow | OrderWithImages) {
+  const draft = buildCustomerThankYouNotification(buildNotificationOrderContext(order))
 
   return dispatchNotification({
     audience: 'customer',

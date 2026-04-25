@@ -41,6 +41,7 @@ import {
   resolveOrderImageUrl,
   restoreWebsiteMedia,
   sendCustomerOrderStatusNotification,
+  sendCustomerThankYouNotification,
   setWebsiteMediaPublishedState,
   subscribeToOrders,
   supabase,
@@ -53,6 +54,7 @@ import {
   buildAdminNewOrderNotification,
   buildCustomerOrderAcknowledgementNotification,
   buildCustomerOrderStatusNotification,
+  buildCustomerThankYouNotification,
   buildDashboardOrderLink,
 } from '@/lib/admin-notifications'
 import {
@@ -190,6 +192,8 @@ function getStatusClasses(status: OrderStatus) {
       return 'border-purple-200 bg-purple-100 text-purple-700'
     case 'completed':
       return 'border-emerald-200 bg-emerald-100 text-emerald-700'
+    case 'delivered':
+      return 'border-pink-200 bg-pink-100 text-pink-700'
   }
 }
 
@@ -414,27 +418,38 @@ export default function AdminDashboard() {
       return
     }
 
+    const isThankYouStep = nextStatus === 'delivered'
+
     queueConfirmation({
-      title: `Update ${order.customer_name} to ${formatOrderStatus(nextStatus)}?`,
-      message:
-        'This moves the order forward in the live workflow immediately. The customer will receive a professional status update email.',
-      actionLabel: `Mark as ${formatOrderStatus(nextStatus)}`,
+      title: isThankYouStep
+        ? `Send thank you to ${order.customer_name}?`
+        : `Update ${order.customer_name} to ${formatOrderStatus(nextStatus)}?`,
+      message: isThankYouStep
+        ? 'This marks the order as delivered and sends a warm thank you email to the customer — with an appreciation note, a review invite, and a come-back message.'
+        : 'This moves the order forward in the live workflow immediately. The customer will receive a professional status update email.',
+      actionLabel: isThankYouStep ? 'Send Thank You & Mark Delivered' : `Mark as ${formatOrderStatus(nextStatus)}`,
       tone: 'default',
       onConfirm: async () => {
         try {
           const updatedOrder = await updateOrderStatus(order.id, nextStatus, order.admin_notes)
-          const notificationResult = await sendCustomerOrderStatusNotification(updatedOrder, nextStatus, order.status)
+          const notificationResult = isThankYouStep
+            ? await sendCustomerThankYouNotification(updatedOrder)
+            : await sendCustomerOrderStatusNotification(updatedOrder, nextStatus, order.status)
 
           if (notificationResult.success) {
-            toast.success(`Status updated to ${formatOrderStatus(nextStatus)}`, {
-              description: 'Customer update email sent successfully.',
-            })
+            toast.success(
+              isThankYouStep ? 'Thank you email sent!' : `Status updated to ${formatOrderStatus(nextStatus)}`,
+              { description: isThankYouStep ? `${order.customer_name} has been thanked for their order.` : 'Customer update email sent successfully.' }
+            )
           } else {
-            toast.success(`Status updated to ${formatOrderStatus(nextStatus)}`, {
-              description: notificationResult.error
-                ? `Customer email was not sent: ${notificationResult.error}`
-                : 'Customer email was not sent.',
-            })
+            toast.success(
+              isThankYouStep ? 'Order marked as delivered' : `Status updated to ${formatOrderStatus(nextStatus)}`,
+              {
+                description: notificationResult.error
+                  ? `Customer email was not sent: ${notificationResult.error}`
+                  : 'Customer email was not sent.',
+              }
+            )
           }
 
           await loadOrders(true)
@@ -750,6 +765,7 @@ export default function AdminDashboard() {
   const startedDraft = buildCustomerOrderStatusNotification(previewOrder, 'started', 'new')
   const progressDraft = buildCustomerOrderStatusNotification(previewOrder, 'in_progress', 'started')
   const completedDraft = buildCustomerOrderStatusNotification(previewOrder, 'completed', 'in_progress')
+  const thankYouDraft = buildCustomerThankYouNotification(previewOrder)
   const activeViewConfig = adminViews.find((view) => view.id === activeView) || adminViews[0]
 
   return (
@@ -1578,6 +1594,11 @@ export default function AdminDashboard() {
                   title="Customer Update: Completed"
                   subject={completedDraft.subject}
                   content={completedDraft.text}
+                />
+                <NotificationCard
+                  title="Thank You & Delivery"
+                  subject={thankYouDraft.subject}
+                  content={thankYouDraft.text}
                 />
               </div>
             </section>

@@ -406,3 +406,59 @@ export function buildCustomerOrderStatusNotification(
 
   return { subject, html, text }
 }
+
+// ─── Customer: Thank you / delivery ─────────────────────────────────────────
+
+export function buildCustomerThankYouNotification(
+  order: NotificationOrderContext
+): NotificationDraft {
+  const firstName = order.customer_name.split(' ')[0]
+  const eventType = toSentenceCase(order.event_type, 'special occasion')
+  const ref = formatOrderReference(order.id)
+  const subject = `Thank you, ${firstName}! 🎂 We hope your cake was everything you dreamed of.`
+
+  const html = emailWrapper(`
+    <p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#1f2937;">It was a joy creating for you 🎉</p>
+    <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.6;">
+      Thank you so much for choosing EVO Cakes for your ${escapeHtml(eventType)}, ${escapeHtml(firstName)}. It means the world to us that you trusted us with such a special moment.
+    </p>
+
+    <div style="background:linear-gradient(135deg,#fdf2f8,#faf5ff);border:1px solid #ede9fe;border-radius:16px;padding:28px 32px;margin:0 0 24px;text-align:center;">
+      <p style="margin:0 0 8px;font-size:32px;">🎂</p>
+      <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#7c3aed;">We hope it was perfect.</p>
+      <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">Every cake we make is crafted with care, creativity, and a whole lot of love. We hope yours brought a smile to every face in the room.</p>
+    </div>
+
+    <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#1f2937;">📸 Share your celebration</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.7;">If you snapped any photos of the cake or the celebration, we'd absolutely love to see them. Tag us or reply to this email — we feature our favourites and love celebrating your moments with you.</p>
+
+    <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#1f2937;">⭐ A quick word goes a long way</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Honest reviews help other families discover us. If you had a great experience, leaving a short note really does make a difference for a small business like ours — and it means more than you know.</p>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin:0 0 24px;">
+      <p style="margin:0;font-size:14px;color:#15803d;line-height:1.7;">🎁 <strong>Your next order is special to us.</strong> When you're ready to celebrate again, reach out and mention Ref <strong>#${escapeHtml(ref)}</strong> — we'll make sure you're taken care of.</p>
+    </div>
+
+    <p style="margin:0 0 4px;font-size:15px;color:#374151;">With gratitude,</p>
+    <p style="margin:0;font-size:15px;color:#374151;"><strong style="color:#7c3aed;">The EVO Cakes Team</strong></p>
+  `)
+
+  const text = [
+    `Thank you, ${firstName}! 🎂`,
+    '',
+    `It was a true joy creating your ${eventType} cake. Thank you for choosing EVO Cakes and trusting us with such a special moment.`,
+    '',
+    'We hope the cake was everything you dreamed of and more — and that the celebration was absolutely perfect.',
+    '',
+    "📸 If you have any photos, we'd love to see them! Tag us or reply to this email.",
+    '',
+    '⭐ If you had a great experience, a short review helps other families find us and means the world to a small business.',
+    '',
+    `🎁 When you're ready to celebrate again, mention Ref #${ref} and we'll make sure you're taken care of.`,
+    '',
+    'With gratitude,',
+    'The EVO Cakes Team',
+  ].join('\n')
+
+  return { subject, html, text }
+}

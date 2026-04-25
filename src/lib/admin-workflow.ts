@@ -1,4 +1,4 @@
-export const orderStatuses = ['new', 'started', 'in_progress', 'completed'] as const
+export const orderStatuses = ['new', 'started', 'in_progress', 'completed', 'delivered'] as const
 
 export type OrderStatus = (typeof orderStatuses)[number]
 
@@ -7,6 +7,7 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
   started: 'Started',
   in_progress: 'In Progress',
   completed: 'Completed',
+  delivered: 'Delivered',
 }
 
 export const orderStatusDescriptions: Record<OrderStatus, string> = {
@@ -14,6 +15,7 @@ export const orderStatusDescriptions: Record<OrderStatus, string> = {
   started: 'Order has been accepted and planning has started.',
   in_progress: 'Cake production is actively underway.',
   completed: 'Order is finished and ready for pickup, delivery, or closeout.',
+  delivered: 'Order delivered. Thank you email sent to the customer.',
 }
 
 export const galleryContentCategories = [
