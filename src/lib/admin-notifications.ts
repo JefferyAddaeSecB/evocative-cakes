@@ -69,16 +69,28 @@ function emailWrapper(bodyContent: string) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EVO Cakes</title>
+  <style>
+    @media only screen and (max-width: 480px) {
+      .email-outer { padding: 16px 8px !important; }
+      .email-header { padding: 24px 20px !important; border-radius: 12px 12px 0 0 !important; }
+      .email-body { padding: 24px 20px !important; }
+      .email-footer { padding: 20px !important; }
+      .detail-label { display: block !important; width: 100% !important; padding-bottom: 2px !important; border-bottom: none !important; }
+      .detail-value { display: block !important; width: 100% !important; padding-top: 0 !important; }
+      .detail-row td { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+      .info-card { padding: 16px !important; }
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background-color:#f5f3ff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f3ff;padding:40px 16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-outer" style="background-color:#f5f3ff;padding:40px 16px;">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
 
           <!-- Header -->
           <tr>
-            <td style="background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);border-radius:16px 16px 0 0;padding:36px 40px;text-align:center;">
+            <td class="email-header" style="background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);border-radius:16px 16px 0 0;padding:36px 40px;text-align:center;">
               <p style="margin:0 0 6px;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">🎂 EVO Cakes</p>
               <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;">Custom Cake Studio</p>
             </td>
@@ -86,14 +98,14 @@ function emailWrapper(bodyContent: string) {
 
           <!-- Body -->
           <tr>
-            <td style="background:#ffffff;padding:36px 40px;border-left:1px solid #ede9fe;border-right:1px solid #ede9fe;">
+            <td class="email-body" style="background:#ffffff;padding:36px 40px;border-left:1px solid #ede9fe;border-right:1px solid #ede9fe;">
               ${bodyContent}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background:#faf5ff;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
+            <td class="email-footer" style="background:#faf5ff;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
               <p style="margin:0 0 6px;font-size:13px;color:#7c3aed;font-weight:600;">EVO Cakes</p>
               <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;">Questions? Reply to this email or reach us at <a href="mailto:evocativecakes@gmail.com" style="color:#8b5cf6;text-decoration:none;">evocativecakes@gmail.com</a></p>
               <p style="margin:0;font-size:11px;color:#d1d5db;">© ${new Date().getFullYear()} EVO Cakes. All rights reserved.</p>
@@ -110,15 +122,15 @@ function emailWrapper(bodyContent: string) {
 
 function detailRow(label: string, value: string) {
   return `
-    <tr>
-      <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6b7280;width:38%;vertical-align:top;border-bottom:1px solid #f3f4f6;">${escapeHtml(label)}</td>
-      <td style="padding:10px 14px;font-size:14px;color:#1f2937;vertical-align:top;border-bottom:1px solid #f3f4f6;">${escapeHtml(value)}</td>
+    <tr class="detail-row">
+      <td class="detail-label" style="padding:10px 14px;font-size:13px;font-weight:600;color:#6b7280;width:38%;vertical-align:top;border-bottom:1px solid #f3f4f6;">${escapeHtml(label)}</td>
+      <td class="detail-value" style="padding:10px 14px;font-size:14px;color:#1f2937;vertical-align:top;border-bottom:1px solid #f3f4f6;">${escapeHtml(value)}</td>
     </tr>`
 }
 
 function infoCard(title: string, content: string, accentColor = '#faf5ff', borderColor = '#ede9fe') {
   return `
-    <div style="background:${accentColor};border:1px solid ${borderColor};border-radius:12px;padding:20px 24px;margin:16px 0;">
+    <div class="info-card" style="background:${accentColor};border:1px solid ${borderColor};border-radius:12px;padding:20px 24px;margin:16px 0;">
       <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:0.8px;">${escapeHtml(title)}</p>
       <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">${escapeHtml(content)}</p>
     </div>`
