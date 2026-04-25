@@ -417,7 +417,7 @@ export default function AdminDashboard() {
     queueConfirmation({
       title: `Update ${order.customer_name} to ${formatOrderStatus(nextStatus)}?`,
       message:
-        'This moves the order forward in the live workflow immediately. If notifications are configured, the customer will also receive a professional status update email.',
+        'This moves the order forward in the live workflow immediately. The customer will receive a professional status update email.',
       actionLabel: `Mark as ${formatOrderStatus(nextStatus)}`,
       tone: 'default',
       onConfirm: async () => {
@@ -1902,7 +1902,7 @@ function OrderCard({
             >
               <span className="block font-semibold">Mark as {formatOrderStatus(nextStatus)}</span>
               <span className="mt-1 block text-xs text-white/85">
-                This is the next allowed step and sends the matching customer update when notifications are active.
+                This is the next allowed step. A status update email will be sent to the customer.
               </span>
             </button>
           ) : (

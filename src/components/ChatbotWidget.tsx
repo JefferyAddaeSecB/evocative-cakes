@@ -93,6 +93,7 @@ export default function ChatbotWidget() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const lastSubmittedOrderRef = useRef<string | null>(null)
+  const conversationImageRef = useRef<File | null>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -238,6 +239,7 @@ export default function ChatbotWidget() {
     let imageBase64: string | null = null
     if (currentImage) {
       imageBase64 = await compressImageToDataUrl(currentImage)
+      conversationImageRef.current = currentImage
     }
 
     const userMessage: Message = {
@@ -305,9 +307,10 @@ export default function ChatbotWidget() {
               serving_size: orderData.serving_size,
               design_preferences: orderData.design_preferences,
             },
-            currentImage ? [currentImage] : undefined
+            conversationImageRef.current ? [conversationImageRef.current] : undefined
           )
 
+          conversationImageRef.current = null
           lastSubmittedOrderRef.current = orderSignature
           toast.success(
             result.customerAcknowledgementSent
