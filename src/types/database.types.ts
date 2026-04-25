@@ -22,7 +22,7 @@ export interface Database {
           dietary_restrictions: string | null
           serving_size: string | null
           design_preferences: string | null
-          status: 'new' | 'started' | 'in_progress' | 'completed'
+          status: 'new' | 'started' | 'in_progress' | 'completed' | 'delivered'
           admin_notes: string | null
           created_at: string
           updated_at: string
@@ -40,7 +40,7 @@ export interface Database {
           dietary_restrictions?: string | null
           serving_size?: string | null
           design_preferences?: string | null
-          status?: 'new' | 'started' | 'in_progress' | 'completed'
+          status?: 'new' | 'started' | 'in_progress' | 'completed' | 'delivered'
           admin_notes?: string | null
           created_at?: string
           updated_at?: string
@@ -58,7 +58,7 @@ export interface Database {
           dietary_restrictions?: string | null
           serving_size?: string | null
           design_preferences?: string | null
-          status?: 'new' | 'started' | 'in_progress' | 'completed'
+          status?: 'new' | 'started' | 'in_progress' | 'completed' | 'delivered'
           admin_notes?: string | null
           created_at?: string
           updated_at?: string
