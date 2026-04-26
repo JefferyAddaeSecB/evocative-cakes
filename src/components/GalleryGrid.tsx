@@ -29,7 +29,7 @@ const galleryFolders: Record<GalleryContentCategory, string> = {
 // Full-res folder names — match /public/images/gallery/ exactly (case-sensitive, note trailing spaces)
 const galleryFullResFolders: Record<GalleryContentCategory, string> = {
   'Wedding Cakes': 'WEDDING-CAKES ',
-  'Birthday Cakes': 'BIRTHDAY-CAKES',
+  'Birthday Cakes': 'Birthday-Cakes',
   Cupcakes: 'CUPCAKES ',
   'Cookies & Treats': 'COOKIES AND TREATS',
   'Custom Cakes': 'CUSTOM-CAKES',
