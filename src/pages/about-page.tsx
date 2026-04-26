@@ -71,7 +71,7 @@ export default function AboutPage() {
               className="relative"
             >
               <img
-                src="/images/gallery/Wedding-Cakes/20250503_085520.jpg"
+                src="/images/gallery/WEDDING-CAKES/1.jpg"
                 alt="Signature EVO Cakes wedding design"
                 className="h-[340px] w-full rounded-3xl object-cover shadow-2xl sm:h-[500px]"
               />
