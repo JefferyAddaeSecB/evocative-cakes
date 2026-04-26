@@ -121,8 +121,10 @@ export default function ContactPage() {
                 {/* Name */}
                 <div>
                   <input
+                    id="name"
                     type="text"
                     placeholder="Full Name *"
+                    autoComplete="name"
                     {...register('name', { required: 'Name is required' })}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                   />
@@ -134,8 +136,10 @@ export default function ContactPage() {
                 {/* Email */}
                 <div>
                   <input
+                    id="email"
                     type="email"
                     placeholder="Email Address *"
+                    autoComplete="email"
                     {...register('email', {
                       required: 'Email is required',
                       pattern: {
@@ -153,8 +157,10 @@ export default function ContactPage() {
                 {/* Phone */}
                 <div>
                   <input
+                    id="phone"
                     type="tel"
                     placeholder="Phone Number *"
+                    autoComplete="tel"
                     {...register('phone', { required: 'Phone number is required' })}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                   />
@@ -166,6 +172,8 @@ export default function ContactPage() {
                 {/* Event Type (select) */}
                 <div>
                   <select
+                    id="eventType"
+                    autoComplete="off"
                     {...register('eventType', { required: 'Please select an event type' })}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                   >
@@ -186,8 +194,9 @@ export default function ContactPage() {
                 {/* Event Date */}
                 <div>
                   <input
+                    id="eventDate"
                     type="date"
-                    placeholder="Event Date"
+                    autoComplete="off"
                     {...register('eventDate')}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                   />
@@ -209,8 +218,10 @@ export default function ContactPage() {
                 {/* Dietary Restrictions */}
                 <div>
                   <input
+                    id="dietaryRestrictions"
                     type="text"
                     placeholder="Dietary Restrictions (optional)"
+                    autoComplete="off"
                     {...register('dietaryRestrictions')}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                   />
@@ -219,8 +230,10 @@ export default function ContactPage() {
                 {/* Serving Size */}
                 <div>
                   <input
+                    id="servingSize"
                     type="text"
                     placeholder="Serving Size (e.g., 20-25 people)"
+                    autoComplete="off"
                     {...register('servingSize')}
                     className="w-full rounded-lg border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 outline-none px-4 py-3 text-gray-700 bg-white transition-all"
                   />
@@ -228,7 +241,7 @@ export default function ContactPage() {
 
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label htmlFor="imageUpload" className="block text-sm font-medium text-gray-700 mb-3">
                     Upload Cake Inspiration Images (Optional)
                   </label>
                   <ImageUploadZone
