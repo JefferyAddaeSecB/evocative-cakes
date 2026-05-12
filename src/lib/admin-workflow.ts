@@ -21,12 +21,12 @@ export const orderStatusDescriptions: Record<OrderStatus, string> = {
 export const galleryContentCategories = [
   'Wedding Cakes',
   'Birthday Cakes',
+  'Custom Cakes',
   'Cupcakes',
   'Cookies & Treats',
-  'Custom Cakes',
 ] as const
 
-export const galleryCategories = ['All', ...galleryContentCategories] as const
+export const galleryCategories = [...galleryContentCategories] as const
 
 export type GalleryContentCategory = (typeof galleryContentCategories)[number]
 export type GalleryCategory = (typeof galleryCategories)[number]

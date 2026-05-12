@@ -93,7 +93,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
   const normalizedInitialCategory =
     initialCategory && galleryCategories.includes(initialCategory as GalleryCategory)
       ? (initialCategory as GalleryCategory)
-      : 'All'
+      : galleryCategories[0]
 
   const [selectedCategory, setSelectedCategory] = useState<GalleryCategory>(normalizedInitialCategory)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
@@ -139,10 +139,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
   }, [])
 
   const allImages = [...liveImages, ...staticGalleryImages]
-  const filteredImages =
-    selectedCategory === 'All'
-      ? allImages
-      : allImages.filter((image) => image.category === selectedCategory)
+  const filteredImages = allImages.filter((image) => image.category === selectedCategory)
 
   const visibleImages = filteredImages.slice(0, visibleCount)
   const hasMore = visibleCount < filteredImages.length
@@ -197,7 +194,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
             key={category}
             type="button"
             onClick={() => setSelectedCategory(category)}
-            className={`inline-flex min-h-11 w-full items-center justify-center rounded-full border px-3 py-2.5 text-center text-[13px] font-semibold transition-all duration-300 sm:min-h-12 sm:px-4 sm:py-3 sm:text-sm ${
+            className={`inline-flex min-h-11 w-full items-center justify-center rounded-full border px-3 py-2.5 text-center text-sm font-semibold transition-all duration-300 sm:min-h-12 sm:px-4 sm:py-3 sm:text-base ${
               selectedCategory === category
                 ? 'border-pink-200 bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-200/80'
                 : 'border-pink-100 bg-pink-50/80 text-purple-700 hover:border-pink-200 hover:bg-white'

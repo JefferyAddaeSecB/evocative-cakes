@@ -38,7 +38,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-4xl md:text-7xl lg:text-8xl font-bold leading-tight"
+                className="w-max text-5xl md:text-7xl lg:text-8xl font-bold leading-tight text-center"
               >
                 <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent block">
                   Evocative
@@ -48,15 +48,25 @@ export default function HomePage() {
                 </span>
               </motion.h1>
 
+              {/* Subheading */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-xl md:text-2xl font-medium text-purple-600 mt-3 md:mt-4 italic"
+              >
+                Every cake awakens your senses
+              </motion.p>
+
               {/* Paragraph */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-lg md:text-2xl text-gray-600 leading-relaxed max-w-2xl mt-4 md:mt-6"
+                className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl mt-3 md:mt-4"
               >
-                Creating magical moments with our handcrafted cakes. From elegant weddings to joyful
-                birthdays, we bring your sweetest dreams to life with artistry and passion.
+                Handcrafted cakes made to create magic. From elegant weddings to joyful
+                birthdays, we turn your sweetest dreams into beautifully delicious reality.
               </motion.p>
 
               {/* Buttons */}

@@ -24,7 +24,7 @@ export default function GalleryPage() {
             <div className="mb-4 flex items-center justify-center space-x-2 md:mb-6">
               <Sparkles className="h-5 w-5 text-yellow-500 md:h-6 md:w-6" />
               <span className="rounded-full border border-purple-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-purple-600 backdrop-blur-sm md:px-4 md:py-2 md:text-lg">
-                Our Portfolio
+                Gallery
               </span>
             </div>
           </motion.div>
@@ -44,7 +44,7 @@ export default function GalleryPage() {
             transition={{ delay: 0.2 }}
             className="mx-auto max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg md:max-w-2xl md:text-xl"
           >
-            Explore our portfolio of cakes, cupcakes, cookies, and celebration treats to see the joy we have helped create for countless moments
+            Browse our handcrafted creations and find inspiration for your dream cake.
           </motion.p>
         </div>
       </section>

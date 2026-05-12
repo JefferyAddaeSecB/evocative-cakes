@@ -327,30 +327,6 @@ export default function ContactPage() {
                 </div>
               </motion.div>
 
-              {/* Business Hours Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="rounded-3xl border border-purple-100 bg-white/90 p-6 shadow-xl backdrop-blur-sm sm:p-8"
-              >
-                <h3 className="mb-6 text-xl font-bold text-gray-800 sm:text-2xl">Business Hours</h3>
-                <div className="space-y-3 text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <span>Monday - Friday</span>
-                    <span className="font-semibold text-gray-800">9:00 AM - 6:00 PM</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Saturday</span>
-                    <span className="font-semibold text-gray-800">10:00 AM - 4:00 PM</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Sunday</span>
-                    <span className="font-semibold text-gray-800">Closed</span>
-                  </div>
-                </div>
-              </motion.div>
-
               {/* Quick Tip Card */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}

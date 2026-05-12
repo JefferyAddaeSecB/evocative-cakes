@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import { Scale } from 'lucide-react'
 
 export default function TermsPage() {
   return (
@@ -12,14 +11,7 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Scale className="w-6 h-6 text-purple-600" />
-              <span className="text-lg font-medium text-purple-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-200">
-                Legal
-              </span>
-            </div>
-
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mt-4 mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-4">
               Terms of Service
             </h1>
 

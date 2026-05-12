@@ -87,7 +87,7 @@ export default function Footer() {
               className="flex items-center gap-3 mb-4"
             >
               <Cake className="w-6 h-6 text-pink-500" />
-              <h3 className="text-2xl font-bold">EVO Cakes</h3>
+              <h3 className="text-2xl font-bold">Evocative Cakes</h3>
             </motion.div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Crafting delicious moments with handmade cakes for every celebration.
@@ -203,6 +203,25 @@ export default function Footer() {
                   Pinterest
                 </div>
               </div>
+
+              {/* TikTok */}
+              <div className="group relative">
+                <AMotion
+                  href="https://www.tiktok.com/@evocativecakes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.2, rotate: 10 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center text-white hover:from-gray-700 hover:to-gray-900 transition-all"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.17 8.17 0 0 0 4.78 1.52V6.76a4.86 4.86 0 0 1-1.01-.07z"/>
+                  </svg>
+                </AMotion>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  TikTok
+                </div>
+              </div>
             </div>
           </DivMotion>
         </div>
@@ -217,7 +236,7 @@ export default function Footer() {
               viewport={{ once: true }}
               className="text-gray-400 text-sm"
             >
-              &copy; {currentYear} EVO Cakes. Made with{' '}
+              &copy; {currentYear} Evocative Cakes. Made with{' '}
               <motion.span
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 1, repeat: Infinity }}

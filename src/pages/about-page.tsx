@@ -1,14 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Sparkles, Heart, Award, Users, Clock } from 'lucide-react'
-import StatCard from '@/components/StatCard'
-
-const stats = [
-  { icon: Heart, gradient: 'from-pink-400 to-rose-400', value: 500, suffix: '+', label: 'Happy Customers' },
-  { icon: Award, gradient: 'from-purple-400 to-violet-400', value: 5, suffix: '+', label: 'Years Experience' },
-  { icon: Users, gradient: 'from-blue-400 to-cyan-400', value: 8, suffix: '', label: 'Team Members' },
-  { icon: Clock, gradient: 'from-green-400 to-emerald-400', value: 1000, suffix: '+', label: 'Cakes Made' },
-]
+import { Sparkles, Heart } from 'lucide-react'
 
 export default function AboutPage() {
   return (
@@ -70,9 +62,10 @@ export default function AboutPage() {
               transition={{ delay: 0.3 }}
               className="relative"
             >
+              {/* TODO: Replace with client-provided cake image */}
               <img
                 src="/images/gallery/WEDDING-CAKES/1.jpg"
-                alt="Signature EVO Cakes wedding design"
+                alt="Signature Evocative Cakes design"
                 className="h-[340px] w-full rounded-3xl object-cover shadow-2xl sm:h-[500px]"
               />
               {/* Floating heart badge */}
@@ -84,17 +77,6 @@ export default function AboutPage() {
                 <Heart className="h-7 w-7 fill-white text-white sm:h-10 sm:w-10" />
               </motion.div>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 2 - Stats Grid */}
-      <section className="bg-white/30 px-4 py-10 backdrop-blur-sm md:py-16">
-        <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-            {stats.map((stat, index) => (
-              <StatCard key={index} {...stat} index={index} />
-            ))}
           </div>
         </div>
       </section>

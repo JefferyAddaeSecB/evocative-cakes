@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NavLink, Link } from 'react-router-dom'
-import { CakeSlice, Menu, X, ArrowRight, Sparkles } from 'lucide-react'
+import { CakeSlice, Menu, X, ArrowRight } from 'lucide-react'
 
 const navLinks = [
   { label: 'Home', path: '/' },
   { label: 'About Us', path: '/about' },
   { label: 'Gallery', path: '/gallery' },
-  { label: 'Contact Us', path: '/contact' },
   { label: 'FAQ', path: '/faq' },
+  { label: 'Inquiry', path: '/contact' },
 ]
 
 const NavMotion = motion.nav
@@ -36,21 +36,6 @@ export default function Navbar() {
             >
               <CakeSlice className="w-4 h-4 text-white" />
             </DivMotion>
-            <span className="text-lg font-bold leading-none tracking-tight">
-              <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Evocative
-              </span>{' '}
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Cakes
-              </span>
-            </span>
-            <motion.div
-              className="ml-1"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-            >
-              <Sparkles className="h-4 w-4 text-yellow-500" />
-            </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -60,7 +45,7 @@ export default function Navbar() {
                 <NavLink
                   to={link.path}
                   className={({ isActive }) =>
-                    `text-base font-semibold transition-all duration-300 hover:text-purple-600 relative group no-underline ${
+                    `text-lg font-semibold transition-all duration-300 hover:text-purple-600 relative group no-underline ${
                       isActive ? 'text-purple-600' : 'text-gray-600'
                     }`
                   }
