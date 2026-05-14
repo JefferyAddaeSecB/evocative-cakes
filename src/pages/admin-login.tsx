@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Lock, Mail, CakeSlice } from 'lucide-react'
+import { Lock, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -42,9 +42,11 @@ export default function AdminLogin() {
       >
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
-            <CakeSlice className="w-8 h-8 text-white" />
-          </div>
+          <img
+            src="/images/gallery/logo.jpg"
+            alt="Evocative Cakes"
+            className="h-16 w-auto object-contain"
+          />
         </div>
 
         {/* Header */}

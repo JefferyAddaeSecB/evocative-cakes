@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NavLink, Link } from 'react-router-dom'
-import { CakeSlice, Menu, X, ArrowRight } from 'lucide-react'
+import { Menu, X, ArrowRight } from 'lucide-react'
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -28,13 +28,16 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 no-underline">
+          <Link to="/" className="flex items-center no-underline">
             <DivMotion
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg"
             >
-              <CakeSlice className="w-4 h-4 text-white" />
+              <img
+                src="/images/gallery/logo.jpg"
+                alt="Evocative Cakes"
+                className="h-10 w-auto object-contain"
+              />
             </DivMotion>
           </Link>
 

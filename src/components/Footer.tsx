@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Heart, Phone, Mail, MapPin, Cake, Instagram } from 'lucide-react'
+import { Heart, Phone, Mail, MapPin, Instagram } from 'lucide-react'
 import { useMemo } from 'react'
 
 const quickLinks = [
@@ -84,10 +84,13 @@ export default function Footer() {
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-3 mb-4"
+              className="mb-4"
             >
-              <Cake className="w-6 h-6 text-pink-500" />
-              <h3 className="text-2xl font-bold">Evocative Cakes</h3>
+              <img
+                src="/images/gallery/logo.jpg"
+                alt="Evocative Cakes"
+                className="h-12 w-auto object-contain"
+              />
             </motion.div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Crafting delicious moments with handmade cakes for every celebration.

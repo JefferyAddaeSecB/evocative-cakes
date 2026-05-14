@@ -68,7 +68,7 @@ function emailWrapper(bodyContent: string) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EVO Cakes</title>
+  <title>Evocative Cakes</title>
   <style>
     @media only screen and (max-width: 480px) {
       .email-outer { padding: 16px 8px !important; }
@@ -91,7 +91,7 @@ function emailWrapper(bodyContent: string) {
           <!-- Header -->
           <tr>
             <td class="email-header" style="background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);border-radius:16px 16px 0 0;padding:36px 40px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">🎂 EVO Cakes</p>
+              <img src="https://evocativecakes.com/images/gallery/logo.jpg" alt="Evocative Cakes" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8px;" />
               <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;">Custom Cake Studio</p>
             </td>
           </tr>
@@ -106,9 +106,9 @@ function emailWrapper(bodyContent: string) {
           <!-- Footer -->
           <tr>
             <td class="email-footer" style="background:#faf5ff;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:13px;color:#7c3aed;font-weight:600;">EVO Cakes</p>
+              <p style="margin:0 0 6px;font-size:13px;color:#7c3aed;font-weight:600;">Evocative Cakes</p>
               <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;">Questions? Reply to this email or reach us at <a href="mailto:evocativecakes@gmail.com" style="color:#8b5cf6;text-decoration:none;">evocativecakes@gmail.com</a></p>
-              <p style="margin:0;font-size:11px;color:#d1d5db;">© ${new Date().getFullYear()} EVO Cakes. All rights reserved.</p>
+              <p style="margin:0;font-size:11px;color:#d1d5db;">© ${new Date().getFullYear()} Evocative Cakes. All rights reserved.</p>
             </td>
           </tr>
 
@@ -189,11 +189,11 @@ export function buildAdminNewOrderNotification(
 
     ${ctaButton('Open in Dashboard →', dashboardUrl)}
 
-    <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">This alert was sent to the EVO Cakes admin team. Do not reply to this automated message.</p>
+    <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">This alert was sent to the Evocative Cakes admin team. Do not reply to this automated message.</p>
   `)
 
   const text = [
-    `New EVO Cakes Order — Ref #${ref}`,
+    `New Evocative Cakes Order — Ref #${ref}`,
     '',
     `Customer: ${order.customer_name}`,
     `Email: ${order.customer_email}`,
@@ -212,7 +212,7 @@ export function buildAdminNewOrderNotification(
     `Review in dashboard: ${dashboardUrl}`,
   ].join('\n')
 
-  const sms = `🎂 New EVO Cakes order from ${order.customer_name} (Ref #${ref}). Review: ${dashboardUrl}`
+  const sms = `🎂 New Evocative Cakes order from ${order.customer_name} (Ref #${ref}). Review: ${dashboardUrl}`
 
   return { subject, html, text, sms }
 }
@@ -253,7 +253,7 @@ export function buildCustomerOrderAcknowledgementNotification(
     </div>
 
     <p style="margin:24px 0 4px;font-size:15px;color:#374151;">We can't wait to bring your vision to life.</p>
-    <p style="margin:0;font-size:15px;color:#374151;">Warm regards,<br /><strong style="color:#7c3aed;">The EVO Cakes Team</strong></p>
+    <p style="margin:0;font-size:15px;color:#374151;">Warm regards,<br /><strong style="color:#7c3aed;">The Evocative Cakes Team</strong></p>
   `)
 
   const text = [
@@ -275,7 +275,7 @@ export function buildCustomerOrderAcknowledgementNotification(
     'Questions? Just reply to this email.',
     '',
     'Warm regards,',
-    'The EVO Cakes Team',
+    'The Evocative Cakes Team',
   ].join('\n')
 
   return { subject, html, text }
@@ -329,7 +329,7 @@ function getStatusConfig(status: OrderStatus): {
         heading: 'Your order has been received',
         subheading: "We have your request and it's now under review.",
         paragraphs: [
-          "Thank you for reaching out to EVO Cakes. Your request is in our queue and will be reviewed shortly.",
+          "Thank you for reaching out to Evocative Cakes. Your request is in our queue and will be reviewed shortly.",
           "We'll follow up with the next steps, quote details, and confirmation information as soon as possible.",
         ],
         badgeColor: '#f59e0b',
@@ -349,7 +349,7 @@ export function buildCustomerOrderStatusNotification(
   const ref = formatOrderReference(order.id)
   const currentLabel = formatOrderStatus(nextStatus)
   const previousLabel = previousStatus ? formatOrderStatus(previousStatus) : null
-  const subject = `${config.icon} EVO Cakes Update: ${currentLabel} — Ref #${ref}`
+  const subject = `${config.icon} Evocative Cakes Update: ${currentLabel} — Ref #${ref}`
 
   const html = emailWrapper(`
     <p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#1f2937;">${config.icon} ${escapeHtml(config.heading)}</p>
@@ -376,12 +376,12 @@ export function buildCustomerOrderStatusNotification(
       <p style="margin:0;font-size:14px;color:#15803d;line-height:1.6;">💬 <strong>Have a question?</strong> Just reply to this email and we'll get back to you.</p>
     </div>
 
-    <p style="margin:24px 0 4px;font-size:15px;color:#374151;">Thank you for choosing EVO Cakes.</p>
-    <p style="margin:0;font-size:15px;color:#374151;">Warm regards,<br /><strong style="color:#7c3aed;">The EVO Cakes Team</strong></p>
+    <p style="margin:24px 0 4px;font-size:15px;color:#374151;">Thank you for choosing Evocative Cakes.</p>
+    <p style="margin:0;font-size:15px;color:#374151;">Warm regards,<br /><strong style="color:#7c3aed;">The Evocative Cakes Team</strong></p>
   `)
 
   const text = [
-    `${config.icon} EVO Cakes Order Update`,
+    `${config.icon} Evocative Cakes Order Update`,
     '',
     `Hello ${order.customer_name},`,
     '',
@@ -401,7 +401,7 @@ export function buildCustomerOrderStatusNotification(
     'Questions? Reply to this email.',
     '',
     'Warm regards,',
-    'The EVO Cakes Team',
+    'The Evocative Cakes Team',
   ].join('\n')
 
   return { subject, html, text }
@@ -420,7 +420,7 @@ export function buildCustomerThankYouNotification(
   const html = emailWrapper(`
     <p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#1f2937;">It was a joy creating for you 🎉</p>
     <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.6;">
-      Thank you so much for choosing EVO Cakes for your ${escapeHtml(eventType)}, ${escapeHtml(firstName)}. It means the world to us that you trusted us with such a special moment.
+      Thank you so much for choosing Evocative Cakes for your ${escapeHtml(eventType)}, ${escapeHtml(firstName)}. It means the world to us that you trusted us with such a special moment.
     </p>
 
     <div style="background:linear-gradient(135deg,#fdf2f8,#faf5ff);border:1px solid #ede9fe;border-radius:16px;padding:28px 32px;margin:0 0 24px;text-align:center;">
@@ -440,13 +440,13 @@ export function buildCustomerThankYouNotification(
     </div>
 
     <p style="margin:0 0 4px;font-size:15px;color:#374151;">With gratitude,</p>
-    <p style="margin:0;font-size:15px;color:#374151;"><strong style="color:#7c3aed;">The EVO Cakes Team</strong></p>
+    <p style="margin:0;font-size:15px;color:#374151;"><strong style="color:#7c3aed;">The Evocative Cakes Team</strong></p>
   `)
 
   const text = [
     `Thank you, ${firstName}! 🎂`,
     '',
-    `It was a true joy creating your ${eventType} cake. Thank you for choosing EVO Cakes and trusting us with such a special moment.`,
+    `It was a true joy creating your ${eventType} cake. Thank you for choosing Evocative Cakes and trusting us with such a special moment.`,
     '',
     'We hope the cake was everything you dreamed of and more — and that the celebration was absolutely perfect.',
     '',
@@ -457,7 +457,7 @@ export function buildCustomerThankYouNotification(
     `🎁 When you're ready to celebrate again, mention Ref #${ref} and we'll make sure you're taken care of.`,
     '',
     'With gratitude,',
-    'The EVO Cakes Team',
+    'The Evocative Cakes Team',
   ].join('\n')
 
   return { subject, html, text }
