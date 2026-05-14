@@ -30,7 +30,7 @@ export default function TermsPage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">1. Agreement to Terms</h2>
                 <p className="text-gray-600 leading-relaxed text-base">
-                  By accessing and using EVO Cakes' website and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
+                  By accessing and using Evocative Cakes' website and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
                 </p>
               </div>
 
@@ -40,7 +40,7 @@ export default function TermsPage() {
 
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">2.1 Order Confirmation</h3>
                 <p className="text-gray-600 leading-relaxed text-base mb-4">
-                  All orders must be confirmed in writing (email or written contract). Orders are not considered final until you receive confirmation from EVO Cakes.
+                  All orders must be confirmed in writing (email, written contract, text message). Orders are not considered final until you receive confirmation from Evocative Cakes.
                 </p>
 
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">2.2 Deposits</h3>
@@ -59,15 +59,8 @@ export default function TermsPage() {
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">3. Cancellations and Refunds</h2>
 
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">3.1 Cancellation Policy</h3>
-                <ul className="list-disc pl-6 space-y-2 text-gray-600 text-base mb-4">
-                  <li>Orders cancelled more than 72 hours before the event date: Full refund minus deposit</li>
-                  <li>Orders cancelled within 72 hours: 50% refund (ingredients already purchased)</li>
-                  <li>Orders cancelled within 24 hours: No refund</li>
-                </ul>
-
-                <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">3.2 Weather and Unforeseen Circumstances</h3>
                 <p className="text-gray-600 leading-relaxed text-base">
-                  In case of severe weather or unforeseen circumstances preventing delivery, we will work with you to reschedule or provide a full refund.
+                  Orders cancelled more than 72 hours before the event date may be subject to a partial refund (ingredients and materials already purchased). Orders cancelled within less than 72 hours will not be subject to a refund.
                 </p>
               </div>
 
@@ -77,7 +70,7 @@ export default function TermsPage() {
 
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">4.1 Delivery</h3>
                 <p className="text-gray-600 leading-relaxed text-base mb-4">
-                  We deliver within a 30-mile radius of our bakery. Delivery fees are calculated based on distance and cake complexity. Delivery times are estimates and may vary due to traffic conditions.
+                  We deliver within the GTA. Delivery fees are calculated based on distance and cake complexity. Delivery times are estimates and may vary due to traffic conditions.
                 </p>
 
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">4.2 Pickup</h3>
@@ -87,7 +80,7 @@ export default function TermsPage() {
 
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 mt-4">4.3 Liability</h3>
                 <p className="text-gray-600 leading-relaxed text-base">
-                  Once the cake is delivered or picked up, EVO Cakes is not responsible for damage, melting, or quality issues caused by improper handling or storage.
+                  Once the cake is delivered or picked up, Evocative Cakes is not responsible for damage, melting, or quality issues caused by improper handling or storage.
                 </p>
               </div>
 
@@ -118,7 +111,7 @@ export default function TermsPage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">7. Photography and Marketing</h2>
                 <p className="text-gray-600 leading-relaxed text-base">
-                  EVO Cakes reserves the right to photograph cakes for marketing purposes unless you explicitly opt out in writing.
+                  Evocative Cakes reserves the right to photograph cakes for marketing purposes unless you explicitly opt out in writing.
                 </p>
               </div>
 
@@ -126,7 +119,7 @@ export default function TermsPage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">8. Limitation of Liability</h2>
                 <p className="text-gray-600 leading-relaxed text-base">
-                  EVO Cakes' liability is limited to the purchase price of the cake. We are not liable for any consequential damages, including but not limited to event cancellations or disappointments.
+                  Evocative Cakes' liability is limited to the purchase price of the cake. We are not liable for any consequential damages, including but not limited to event cancellations or disappointments.
                 </p>
               </div>
 
@@ -146,14 +139,13 @@ export default function TermsPage() {
                 </p>
                 <div className="mt-3 text-gray-700 space-y-1">
                   <p><strong>Email:</strong> evocativecakes@gmail.com</p>
-                  <p><strong>Phone:</strong> (555) 123-CAKE</p>
                 </div>
               </div>
 
               {/* Footer */}
               <div className="mt-8 p-6 bg-purple-50 rounded-xl border border-purple-200">
                 <p className="text-sm text-gray-600">
-                  By placing an order with EVO Cakes, you acknowledge that you have read, understood, and agree to these Terms of Service.
+                  By placing an order with Evocative Cakes, you acknowledge that you have read, understood, and agree to these Terms of Service.
                 </p>
               </div>
             </div>
