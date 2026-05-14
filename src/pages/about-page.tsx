@@ -30,7 +30,7 @@ export default function AboutPage() {
                 transition={{ delay: 0.2 }}
                 className="mt-2 mb-4 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent sm:text-5xl md:mt-4 md:mb-6 md:text-6xl"
               >
-                About EVO Cakes
+                About Evocative Cakes
               </motion.h1>
 
               <motion.p
@@ -39,19 +39,42 @@ export default function AboutPage() {
                 transition={{ delay: 0.3 }}
                 className="mb-4 text-base leading-relaxed text-gray-600 sm:text-lg"
               >
-                Founded in 2020 with a passion for creating extraordinary cakes, EVO Cakes has become
-                the premier destination for custom wedding and birthday cakes in the city.
+                Hi, I'm Cynthia, the creative soul and founder behind Evocative Cakes. I've always had a passion for all things creative,
+                from experimenting in the kitchen to trying new art projects—and baking became my favorite canvas.
               </motion.p>
 
               <motion.p
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
+                className="mb-4 text-base leading-relaxed text-gray-600 sm:text-lg"
+              >
+                My journey started ten years ago with a very special request: my then 6-year-old son wanted a Lego-themed birthday
+                cake. After checking local bakeries, I nearly fell over at the price—and thought, "I can do this myself!" With a little
+                research, a lot of trial and error, and some invaluable help from a coworker, I baked and carved out a cake that wowed
+                everyone at the party. It didn't just look amazing—it tasted incredible. That first cake sparked a love for custom
+                creations that has grown into what is now Evocative Cakes.
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mb-4 text-base leading-relaxed text-gray-600 sm:text-lg"
+              >
+                Since then, I've baked for family, friends, and soon enough, strangers who became clients. I've learned that a cake is
+                more than dessert—it's a centerpiece for memories, a conversation starter, and sometimes even the star of the show.
+                My goal is to make every cake a unique, delicious, and unforgettable experience for both the host and the guests.
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
                 className="text-base leading-relaxed text-gray-600 sm:text-lg"
               >
-                Our team of skilled bakers and decorators combines traditional techniques with modern artistry
-                to create cakes that are not just delicious, but true works of art. Every cake tells a story,
-                and we're honored to be part of your special moments.
+                At Evocative Cakes, I combine artistry with flavor, crafting custom creations that leave a lasting impression long after
+                the candles are blown out. Every cake tells a story—and I can't wait to help tell yours.
               </motion.p>
             </div>
 
