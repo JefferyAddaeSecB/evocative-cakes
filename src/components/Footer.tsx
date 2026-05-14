@@ -87,7 +87,7 @@ export default function Footer() {
               className="mb-4"
             >
               <img
-                src="/images/gallery/logo.jpg"
+                src="/images/logo.jpg"
                 alt="Evocative Cakes"
                 className="h-12 w-auto object-contain"
               />

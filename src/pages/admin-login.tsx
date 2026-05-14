@@ -43,7 +43,7 @@ export default function AdminLogin() {
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <img
-            src="/images/gallery/logo.jpg"
+            src="/images/logo.jpg"
             alt="Evocative Cakes"
             className="h-16 w-auto object-contain"
           />

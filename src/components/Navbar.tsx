@@ -34,7 +34,7 @@ export default function Navbar() {
               whileTap={{ scale: 0.95 }}
             >
               <img
-                src="/images/gallery/logo.jpg"
+                src="/images/logo.jpg"
                 alt="Evocative Cakes"
                 className="h-10 w-auto object-contain"
               />

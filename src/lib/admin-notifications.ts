@@ -91,7 +91,7 @@ function emailWrapper(bodyContent: string) {
           <!-- Header -->
           <tr>
             <td class="email-header" style="background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);border-radius:16px 16px 0 0;padding:36px 40px;text-align:center;">
-              <img src="https://evocativecakes.com/images/gallery/logo.jpg" alt="Evocative Cakes" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8px;" />
+              <img src="https://evocativecakes.com/images/logo.jpg" alt="Evocative Cakes" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8px;" />
               <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;">Custom Cake Studio</p>
             </td>
           </tr>
