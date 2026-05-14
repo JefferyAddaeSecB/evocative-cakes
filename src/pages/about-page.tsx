@@ -85,9 +85,8 @@ export default function AboutPage() {
               transition={{ delay: 0.3 }}
               className="relative"
             >
-              {/* TODO: Replace with client-provided cake image */}
               <img
-                src="/images/gallery/WEDDING-CAKES/1.jpg"
+                src="/images/gallery/WEDDING-CAKES/7.jpg"
                 alt="Signature Evocative Cakes design"
                 className="h-[340px] w-full rounded-3xl object-cover shadow-2xl sm:h-[500px]"
               />
