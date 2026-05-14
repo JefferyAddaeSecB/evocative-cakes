@@ -15,31 +15,8 @@ const faqs: FAQItem[] = [
     question: 'How far in advance should I place an order?',
     answer: [
       'For most custom cakes, placing your order at least 2 weeks in advance is the safest option.',
-      'For wedding cakes and larger events, plan for 4 to 6 weeks so there is enough time for design planning, scheduling, and production.',
-    ],
-  },
-  {
-    category: 'Ordering',
-    question: 'Do you accept rush orders?',
-    answer: [
-      'Rush orders may be possible depending on the design, event date, and current schedule.',
+      'For wedding cakes and larger events, plan for 4 to 6 weeks so there is enough time for design planning, scheduling, and production. Rush orders may be possible depending on the design, event date, and current schedule.',
       'Because they require schedule changes and faster turnaround, rush requests can involve additional fees.',
-    ],
-  },
-  {
-    category: 'Ordering',
-    question: 'What information should I send when requesting a quote?',
-    answer: [
-      'The most helpful details are your event date, event type, approximate serving count, cake flavor, dietary needs, and design direction.',
-      'If you already have inspiration photos, you can upload them through the contact form so the team can understand your style more quickly.',
-    ],
-  },
-  {
-    category: 'Pricing',
-    question: 'How much do your cakes cost?',
-    answer: [
-      'As a general starting point, birthday cakes on the site begin around $65 to $85, custom design cakes start around $85 to $150+, and wedding cakes typically start around $279 to $399+.',
-      'Final pricing depends on serving size, design complexity, ingredients, and finishing details. Quotes are valid for 30 days.',
     ],
   },
   {
@@ -52,15 +29,14 @@ const faqs: FAQItem[] = [
   },
   {
     category: 'Pricing',
-    question: 'Do you offer tastings?',
+    question: 'Do you offer tasting?',
     answer: [
-      'Yes. Complimentary tastings are available for wedding cakes and for orders over $200.',
-      'If you are interested in a tasting, mention it when you contact the bakery so it can be arranged with your quote process.',
+      'Yes. Complimentary tastings are available for wedding cakes and the tasting fee is credited toward the final wedding cake price.',
     ],
   },
   {
     category: 'Design',
-    question: 'What flavors do you offer?',
+    question: 'What flavours do you offer?',
     answer: [
       'Common options include vanilla, chocolate, red velvet, lemon, carrot, and strawberry.',
       'Custom flavor requests may also be possible, so it is worth asking if you want something more specific.',
@@ -70,24 +46,7 @@ const faqs: FAQItem[] = [
     category: 'Design',
     question: 'Can you create a cake based on an inspiration photo?',
     answer: [
-      'Yes. EVO Cakes can work from inspiration images and create a design in a similar style with its own signature finish.',
-      'If the request involves copyrighted logos or characters, the bakery may not be able to reproduce the design exactly without proper licensing.',
-    ],
-  },
-  {
-    category: 'Design',
-    question: 'Can I see examples of your previous work before ordering?',
-    answer: [
-      'Yes. The Gallery page shows a wide range of wedding cakes, birthday cakes, cupcakes, cookies and treats, and celebration designs.',
-      'You can use those examples as a starting point, or send a reference image if you already know the look you want.',
-    ],
-  },
-  {
-    category: 'Dietary',
-    question: 'Do you offer gluten-free, vegan, nut-free, or dairy-free options?',
-    answer: [
-      'Yes. EVO Cakes offers gluten-free, vegan, nut-free, and dairy-free options.',
-      'Please share any dietary requirements when you order so they can be planned into the design, ingredients, and preparation process.',
+      'The beauty of custom cakes is the freedom for clients to express their individuality. We can work from inspiration images and create a design in a similar style with its own signature finish, however we will not be able to reproduce the exact design of your inspiration photos.',
     ],
   },
   {
@@ -99,75 +58,19 @@ const faqs: FAQItem[] = [
     ],
   },
   {
-    category: 'Serving',
-    question: 'How do I choose the right cake size?',
-    answer: [
-      'A common serving guide is: 6-inch serves 8 to 10 people, 8-inch serves 15 to 20, 10-inch serves 25 to 30, and 12-inch serves 40 to 50.',
-      'For larger guest counts or formal events, the bakery can recommend tiered options or a combination of display cake plus serving cake.',
-    ],
-  },
-  {
     category: 'Delivery',
     question: 'Do you offer delivery or pickup?',
     answer: [
-      'Yes. Delivery is available within the local service area, and pickup is also available.',
-      'Delivery fees vary based on distance and cake size or complexity, so the final fee is confirmed with your quote.',
+      'Yes. Delivery is available within the local service area for an additional charge. Delivery fees vary based on distance and cake size or complexity, so the final fee is confirmed with your quote.',
+      'Pickup is also available, however cakes 3 tiers or more have to be delivered and the delivery charge will be included in the cake price.',
     ],
   },
   {
     category: 'Delivery',
     question: 'What areas do you serve?',
     answer: [
-      'EVO Cakes is based in Brampton, Ontario and serves the surrounding local area.',
+      'Evocative Cakes is based in Brampton, Ontario and serves the surrounding local area.',
       'If your event is outside the usual delivery range, it is still worth asking because availability can depend on date, distance, and order size.',
-    ],
-  },
-  {
-    category: 'Delivery',
-    question: 'When does responsibility for the cake transfer to me?',
-    answer: [
-      'Once the cake has been delivered or picked up successfully, the customer becomes responsible for handling, transport, and storage.',
-      'That means damage caused afterward by heat, movement, tipping, or improper storage is not covered by the bakery.',
-    ],
-  },
-  {
-    category: 'Care',
-    question: 'How should I store my cake before serving?',
-    answer: [
-      'Most cakes should be refrigerated and brought out 1 to 2 hours before serving so the texture and flavor are at their best.',
-      'Fondant-covered cakes can sometimes remain at room temperature, but the bakery will provide storage guidance specific to your order.',
-    ],
-  },
-  {
-    category: 'Policies',
-    question: 'What is your cancellation and refund policy?',
-    answer: [
-      'Orders cancelled more than 72 hours before the event may be refunded minus the deposit.',
-      'Orders cancelled within 72 hours may receive only a partial refund, and cancellations within 24 hours are typically non-refundable.',
-    ],
-  },
-  {
-    category: 'Policies',
-    question: 'What happens if weather or an emergency affects delivery?',
-    answer: [
-      'If severe weather or another unforeseen event prevents delivery, EVO Cakes will work with you on rescheduling or another fair resolution.',
-      'In situations where the order cannot be fulfilled because of those circumstances, a full refund may be offered.',
-    ],
-  },
-  {
-    category: 'Policies',
-    question: 'Will my cake be photographed and shared online?',
-    answer: [
-      'The bakery may photograph finished cakes for portfolio or marketing use.',
-      'If you do not want your order photographed or shared, request that in writing when placing your order.',
-    ],
-  },
-  {
-    category: 'Support',
-    question: 'How quickly will I hear back after I submit the contact form?',
-    answer: [
-      'The site states that the team aims to respond within the next 24 hours after a cake request is submitted.',
-      'If your request is urgent, include that in your message so the team can review the timing as soon as possible.',
     ],
   },
 ]
