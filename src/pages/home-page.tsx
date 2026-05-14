@@ -148,8 +148,8 @@ export default function HomePage() {
             transition={{ delay: 0.1 }}
             className="text-2xl text-gray-600 max-w-3xl mx-auto mb-10"
           >
-            Let our expert bakers bring your vision to life. From concept to creation, we're here to
-            make your special day unforgettable.
+            Browse our handcrafted creations and find
+            inspiration for your dream cake.
           </motion.p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
