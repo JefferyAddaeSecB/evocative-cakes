@@ -76,6 +76,15 @@ export default function AboutPage() {
                 At Evocative Cakes, I combine artistry with flavor, crafting custom creations that leave a lasting impression long after
                 the candles are blown out. Every cake tells a story—and I can't wait to help tell yours.
               </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+                className="text-base font-semibold text-purple-600 sm:text-lg mt-2"
+              >
+                — Cynthia
+              </motion.p>
             </div>
 
             {/* Right Column - Image with floating heart */}
