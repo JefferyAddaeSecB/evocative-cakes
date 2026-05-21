@@ -32,7 +32,7 @@ const categories: Category[] = [
   {
     id: 3,
     name: 'Cookies & Treats',
-    image: '/images/gallery/COOKIES%20AND%20TREATS/30.jpg',
+    image: '/images/gallery/COOKIES AND TREATS/1.jpg',
     description: 'Delightful bite-sized treats',
     color: 'from-blue-400 to-blue-600',
   },
@@ -86,7 +86,7 @@ export default function FeaturedCategories() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8"
         >
           {categories.map((category) => (
             <motion.div key={category.id} variants={itemVariants}>
