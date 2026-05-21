@@ -18,7 +18,7 @@ const categories: Category[] = [
   {
     id: 1,
     name: 'Wedding Cakes',
-    image: '/images/gallery/WEDDING-CAKES/18.jpg',
+    image: '/images/gallery/WEDDING-CAKES/4_Tracy and Lawrence.jpg',
     description: 'Elegant designs for your special day',
     color: 'from-rose-400 to-pink-600',
   },

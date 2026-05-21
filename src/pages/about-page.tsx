@@ -95,7 +95,7 @@ export default function AboutPage() {
               className="relative"
             >
               <img
-                src="/images/gallery/WEDDING-CAKES/7.jpg"
+                src="/images/gallery/WEDDING-CAKES/2_Mike and Gloria.jpg"
                 alt="Signature Evocative Cakes design"
                 className="h-[340px] w-full rounded-3xl object-cover shadow-2xl sm:h-[500px]"
               />
