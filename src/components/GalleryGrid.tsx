@@ -34,111 +34,32 @@ const galleryFullResFolders: Record<GalleryContentCategory, string> = {
   'Custom Cakes': 'CUSTOM-CAKES',
 }
 
-const sortGalleryFilesNumerically = (fileNames: string[]) =>
-  [...fileNames].sort((left, right) => {
-    const leftMatch = left.match(/^(\d+)/)
-    const rightMatch = right.match(/^(\d+)/)
-    const leftIndex = leftMatch ? Number(leftMatch[1]) : Number.POSITIVE_INFINITY
-    const rightIndex = rightMatch ? Number(rightMatch[1]) : Number.POSITIVE_INFINITY
-
-    if (leftIndex !== rightIndex) {
-      return leftIndex - rightIndex
-    }
-
-    return left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' })
-  })
-
-const weddingCakeFiles = sortGalleryFilesNumerically([
-  '1_Ophelia and Eman.jpg',
-  '2_Mike and Gloria.jpg',
-  '3_Choir Master.jpg',
-  '4_Tracy and Lawrence.jpg',
-  '5_S and R.jpg',
-  '6_Bredged Aunt.jpg',
-  '7_She said yes.jpg',
-  '8_Aunty Julie 65.jpg',
-  '9_Engaged.jpg',
-  '10_Gifty 45.jpg',
-  '11_20th Anniversary.jpg',
-  '12_Purple cake and cupcakes side.jpg',
-  '13_Green Engaged.jpg',
-  '14_Heart Miss to Mrs.jpg',
-  '15_Tracy and Lawrence2.jpg',
-  '16_Anivesary cake.jpg',
-  '17_Purple cake.jpg',
-  '18_16th Anniversary.jpg',
-  '19_Ghanaian Nurses.jpg',
-])
-
-const birthdayCakeFiles = sortGalleryFilesNumerically(
-  Array.from({ length: 46 }, (_, i) => `${i + 1}.jpg`)
-)
-
-const customCakeFiles = sortGalleryFilesNumerically([
-  '1.jpg',
-  '2.jpg',
-  '3.jpg',
-  '4.jpg',
-  '5.jpg',
-  '6.jpg',
-  '7.jpg',
-  '8.jpg',
-  '9.jpg',
-  '10.jpg',
-  '11.jpg',
-  '12.jpg',
-  '13.jpg',
-  '14.jpg',
-  '15.jpg',
-  '16.jpg',
-  '17.jpg',
-  '18.jpg',
-  '19.jpg',
-  '20.jpg',
-  '21.jpg',
-  '22.jpg',
-  '23.jpg',
-  '24.jpg',
-  '25.jpg',
-  '26.jpg',
-  '27.jpg',
-  '28.jpg',
-  '29.jpg',
-  '30.jpg',
-  '31.jpg',
-  '32.jpg',
-  '33.jpg',
-  '34.jpg',
-  '35.jpg',
-  '36.jpg',
-  '37.jpg',
-  '38.jpg',
-  '39.jpg',
-  '40.JPG',
-  '41.jpg',
-  '42.JPG',
-  '43.jpg',
-  '44.jpg',
-  '45.jpg',
-  '46.jpg',
-  '47.jpg',
-  '48.jpg',
-  '49.jpg',
-  '50.jpg',
-  '51.jpg',
-  '52.jpg',
-  '53.jpg',
-  '54.jpg',
-  '55.jpg',
-  '56.jpg',
-])
-
 const galleryFileMap: Record<GalleryContentCategory, string[]> = {
-  'Wedding Cakes': weddingCakeFiles,
-  'Birthday Cakes': birthdayCakeFiles,
+  'Wedding Cakes': [
+    '1_Ophelia and Eman.jpg',
+    '2_Mike and Gloria.jpg',
+    '3_Choir Master.jpg',
+    '4_Tracy and Lawrence.jpg',
+    '5_S and R.jpg',
+    '6_Bredged Aunt.jpg',
+    '7_She said yes.jpg',
+    '8_Aunty Julie 65.jpg',
+    '9_Engaged.jpg',
+    '10_Gifty 45.jpg',
+    '11_20th Anniversary.jpg',
+    '12_Purple cake and cupcakes side.jpg',
+    '13_Green Engaged.jpg',
+    '14_Heart Miss to Mrs.jpg',
+    '15_Tracy and Lawrence2.jpg',
+    '16_Anivesary cake.jpg',
+    '17_Purple cake.jpg',
+    '18_16th Anniversary.jpg',
+    '19_Ghanaian Nurses.jpg',
+  ],
+  'Birthday Cakes': Array.from({ length: 46 }, (_, i) => `${i + 1}.jpg`),
   Cupcakes: Array.from({ length: 23 }, (_, i) => `${i + 1}.jpg`),
-  'Cookies & Treats': Array.from({ length: 31 }, (_, i) => `${i + 1}.jpg`),
-  'Custom Cakes': customCakeFiles,
+  'Cookies & Treats': Array.from({ length: 29 }, (_, i) => `${i + 1}.jpg`),
+  'Custom Cakes': Array.from({ length: 56 }, (_, i) => `${i + 1}.jpg`),
 }
 
 const buildGallerySrc = (category: GalleryContentCategory, fileName: string) =>
@@ -340,7 +261,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
                       currentIds.includes(image.id) ? currentIds : [...currentIds, image.id]
                     )
                   }}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="h-full w-full object-cover sm:object-contain transition-transform duration-500 group-hover:scale-110"
                 />
 
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
