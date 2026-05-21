@@ -240,7 +240,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
             {visibleImages.map((image, index) => (
               <motion.div
                 key={image.id}
-                className="group relative aspect-[4/5] cursor-pointer overflow-hidden rounded-2xl shadow-xl sm:h-80 sm:aspect-auto"
+                className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl"
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
@@ -261,7 +261,7 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
                       currentIds.includes(image.id) ? currentIds : [...currentIds, image.id]
                     )
                   }}
-                  className="h-full w-full object-contain scale-100 transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover scale-100 transition-transform duration-500 group-hover:scale-105"
                 />
 
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
