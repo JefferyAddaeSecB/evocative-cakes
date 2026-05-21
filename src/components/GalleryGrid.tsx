@@ -236,11 +236,11 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-3 justify-center">
             {visibleImages.map((image, index) => (
               <motion.div
                 key={image.id}
-                className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl"
+                className="group relative w-full md:max-w-[260px] md:max-h-[320px] cursor-pointer overflow-hidden rounded-2xl shadow-xl"
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
