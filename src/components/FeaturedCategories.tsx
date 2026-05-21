@@ -18,14 +18,14 @@ const categories: Category[] = [
   {
     id: 1,
     name: 'Wedding Cakes',
-    image: '/images/gallery/WEDDING-CAKES/4_Tracy and Lawrence.jpg',
+    image: '/images/gallery/WEDDING-CAKES/1_Ophelia and Eman.jpg',
     description: 'Elegant designs for your special day',
     color: 'from-rose-400 to-pink-600',
   },
   {
     id: 2,
     name: 'Birthday Cakes',
-    image: '/images/gallery/BIRTHDAY-CAKES/5.jpg',
+    image: '/images/gallery/BIRTHDAY-CAKES/1.jpg',
     description: 'Celebrate with joy and flavor',
     color: 'from-purple-400 to-purple-600',
   },
