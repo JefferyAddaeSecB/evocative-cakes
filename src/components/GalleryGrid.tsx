@@ -236,11 +236,11 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:gap-6 lg:grid-cols-3 justify-center">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-5">
             {visibleImages.map((image, index) => (
               <motion.div
                 key={image.id}
-                className="group relative w-full md:max-w-[260px] md:max-h-[320px] cursor-pointer overflow-hidden rounded-2xl shadow-xl"
+                className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl"
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
@@ -255,13 +255,13 @@ export default function GalleryGrid({ initialCategory }: { initialCategory?: str
                   loading={index < 6 ? 'eager' : 'lazy'}
                   decoding="async"
                   fetchPriority={index < 3 ? 'high' : 'auto'}
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
+                  sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
                   onError={() => {
                     setThumbnailFallbackIds((currentIds) =>
                       currentIds.includes(image.id) ? currentIds : [...currentIds, image.id]
                     )
                   }}
-                  className="w-full h-full object-cover scale-100 transition-transform duration-500 group-hover:scale-105"
+                  className="aspect-[3/4] w-full object-cover scale-100 transition-transform duration-500 group-hover:scale-105"
                 />
 
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
